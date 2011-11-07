@@ -18,6 +18,7 @@ Status error(const char * format, ...) {
   vfprintf(stderr, format, args);
   fprintf(stderr, " on line %d\n", line_num);
 
+  va_end(args)
   return ERROR;
 }
 
