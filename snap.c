@@ -37,6 +37,10 @@ Status error(const char * format, ...) {
   return ERROR;
 }
 
+Status expected(char e, char c) {
+  return error("expected '%c', instead found '%c'", e, c);
+}
+
 int main(int argc, char** argv) {
   Status status;
   FILE* fp;
@@ -78,7 +82,6 @@ Line* alloc_line() {
   if(l) {
     l->label = NULL;
     l->instruction = NULL;
-    l->operand = NULL;
     l->byte_size = -1;
   }
   return l;
@@ -188,80 +191,189 @@ char* get_instruction(char* l, char** instruction) {
   return lp;
 }
 
-char* get_operand(char* lp, Line* l) {
+Status get_operand(char* lp, Line* l) {
   /* skip whitespace */
   while(*lp && isspace(*lp)) lp++;
   
+  /* if there's no operand, the operand is implied */
+  if(!*lp) {
+    line->addr_mode = IMPLIED;
+  }
   /* if the operand starts with a #, it's immediate */
-  if(*lp == '#') {
+  else if(*lp == '#') {
     line->addr_mode = IMMEDIATE;
-    line->expr1 = read_atom(*lp);
+
+    /* skip past the # and read the expression */
+    lp++;
+    line->expr1 = read_expr(*lp);
   }
-  /* if the operand starts with a [, it's indirect long '['? */
+  /* if the operand starts with a [, it's indirect long */
   else if(*lp == '[') {
-    /* skip whitespace */
+    /* skip the '[' and following whitespace */
+    lp++;
+    while(*lp && isspace(*lp)) lp++;
 
-    line->expr1 = read_num(&lp);
+    /* read in the expression in the []s */
+    line->expr1 = read_expr(&lp);
 
-    /* skip whitespace */
-
-    /* expect a ']' */
-
-    /* if we're at the end of the line, it's just indirect long */
-
-    /* if there's a comma followed by a 'Y', we're indirect long Y indexed */
-
-    /* anything else is an error */
-  }
-  /* if the operand starts with a ( it's indirect */
-  else if(*lp == '(') {
-    
-  }
-  /* otherwise it's an absolute, possibly indexed, or a move */
-  else {
-    line->expr1 = read_atom(&lp);
-    /* skip whitespace */
-    
-    /* if we're at the end of the line, it's absolute */
-
-    /* if there's a comma followed by an X, Y, or S it's indexed */
-
-    /* if there's a comma followed by anything else, it's a move */
-
-    /* anything else is an error */
-  }
-}  
-
-/* if the operand starts with a digit, then it starts with a number.
-     %, $, and - can also prefix numbers. The first two specify binary
-     and hex, respectively, and a - of course is unary minus */
-  else if(isdigit(*lp) || *lp == '%' || *lp == '$') {
-    line->expr1 = read_num(&lp);
-    
     /* skip whitespace */
     while(*lp && isspace(*lp)) lp++;
 
-    /* we might have a comma */
-    if(*lp == ',') {
-      /* skip whitespace */
-      
-      /* another expression means move semantics */
-
-      /* an X means absolute indexed, X */
-
-      /* a Y means absolute indexed, Y */
-
-      /* an S means stack relative */
-
-      /* anything else is invalid */
-      
-    }
+    /* expect a ']' */
+    if(*lp != ']')
+      return expected(']', *lp);
     
-    /* if we're at the end of the line, we've got an absolute. */
+    /* skip any whitespace after the ] */
+    while(*lp && isspace(*lp)) lp++;
 
-    /* anything else is unexpected and an error */
+    /* if we're at the end of the line, it's just indirect long */
+    if(!*lp)
+      line->addr_mode = INDIRECT_LONG;
+    /* if there's a comma followed by a 'Y', we're indirect long Y indexed */
+    else if(*lp == ',') {
+      /* skip whitespace after the comma */
+      while(*lp && isspace(*lp)) lp++;
+      /* expect Y */
+      if(tolower(*lp) != 'y')
+        return expected('Y', *lp);
+      line->addr_mode = INDIRECT_LONG_INDEXED_Y
+      /* move past the Y */
+      lp++;
+    }
+  }
+  /* if the operand starts with a ( it's going to be:
+    indirect:            lda ( $01 )
+    indirect indexed y:  lda ( $01 ) , Y
+    indexed indirect x:  lda ( $01 ,  X )
+    SR indirect indexed: lda ( $01 , S ) , Y */
+  else if(*lp == '(') {
+    /* skip whitespace after the paren */
+    while(*lp && isspace(*lp)) lp++;
+    
+    line->expr1 = read_expr(&lp);
+
+    /* skip whitespace after the expr */
+    while(*lp && isspace(*lp)) lp++;
+
+    /* if a rparen immediately follows the expression, we might have:
+      indirect: lda ($01)
+      indirect indexed y: lda ($01), Y */
+    if(*lp == ')') {
+      lp++;
+      while(*lp && isspace(*lp)) lp++;
+
+      /* are we at the end of the line? if so, we have:
+        indirect: lda ($01) */
+      if(!*lp)
+        line->addr_mode = INDIRECT;
+      /* is there a comma followed by a Y? if so, we have:
+        indirect indexed y: lda ($01), Y */
+      else if(*lp == ',') {
+        /* skip whitespace after the comma */
+        while(*lp && isspace(*lp)) lp++;
+        
+        /* expect a Y */
+        if(tolower(*lp) != 'y')
+          return expected('Y', *lp);
+        /* skip past the Y */
+        lp++;
+        line->addr_mode = INDIRECT_INDEXED_Y;
+      }
+      /* anything else following the ) is unexpected, will be caught at the
+         end of this function */
+    }
+    /* if a comma follows the expression, we might have:
+      indexed indirect: lda ($01, X)
+      SR indirect indexed: lda ($01, S), Y */
+    else if(*lp == ',') {
+      /* move past the comma */
+      lp++;
+      while(*lp && isspace(*lp)) lp++;
+
+      /* we're expecting either X or S */
+      if(!*lp)
+        return error("unexpected end-of-line");
+      /* if the comma is followed by X, we have:
+        indexed indirect: lda ( $01 , X ) */
+      else if(tolower(*lp) == 'x') {
+        /* move past the X */
+        lp++;
+        while(*lp && isspace(*lp)) lp++;
+        
+        /* expect a ')' */
+        if(*lp != ')')
+          return expected(')', *lp);
+        /* move past the ')' */
+        lp++;
+        line->addr_mode = INDEXED_INDIRECT_X;
+      }
+      /* if the comma is followed by S, we have:
+        SR indirect indexed: lda ( $01 , S ) , Y */
+      else if(tolower(*lp) == 's') {
+        /* move past the S */
+        lp++;
+        while(*lp && isspace(*lp)) lp++;
+
+        /* expect a ')' */
+        if(*lp != ')')
+          return expected(')', *lp);
+        /* move past the ')' */
+        lp++;
+        while(*lp && isspace(*lp)) lp++;
+
+        /* expect a 'Y' */
+        if(tolower(*lp) != 'y')
+          return expected('Y', *lp);
+        line->addr_mode = SR_INDIRECT_INDEXED;
+      }
+      /* anything else after the , is unexpected and will be caught at the
+         end of this function */
+    }
+    /* if we don't have anything, error */
+    else if(!*lp) {
+      return error("unexpected end-of-line");
+    }
+    /* anything else following the expression is unexpected, will be handled at
+       the end of this function*/
+  }
+  /* otherwise it's:
+     absolute: lda $01
+     indexed: lda $01, X ; lda $01, Y ; lda $01, S
+     move: mvn $01, $02 */
+  else {
+    line->expr1 = read_expr(&lp);
+    /* skip whitespace */
+    while(*lp && isspace(*lp)) lp++;
+    
+    /* if we're at the end of the line, it's absolute */
+    if(!*lp)
+      line->addr_mode = ABSOLUTE;
+    /* if a comma follows the expression, it might be:
+     indexed: lda $01, X ; lda $01, Y ; lda $01, S
+     move: mvn $01, $02 */
+    else if(*lp == ',') {
+      /* move past comma */
+      lp++;
+      while(*lp && isspace(*lp));
+    
+      switch(tolower(*lp)) {
+      case 'x': addr_mode = ABSOLUTE_INDEXED_X; lp++; break;
+      case 'y': addr_mode = ABSOLUTE_INDEXED_Y; lp++; break;
+      case 's': addr_mode = STACK_RELATIVE; lp++; break;
+      default: line->expr2 = read_expr(&lp);
+      }
+    }
+    /* anything else following the expression is unexpected, will be handled
+       at the end of this function */
   }
 
+  /* clear any extraneous whitespace */
+  while(*lp && isspace(*lp)) lp++;
+
+  if(*lp)
+    return error("unexpected %s", lp);
+  return OK;
+}  
 
 /* iterates through the assembled lines, writing each to disk */
 void write_assembled(FILE* fp) {
