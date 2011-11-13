@@ -3,11 +3,29 @@
 #include <stdlib.h>
 #include <string.h>
 
+int usage() {
+  fprintf(stderr, "Usage: snap <in-file> <out-file>\n");
+  return -1;
+}
+
 /* defines */
 #define LINE_LENGTH 256
 
 /* enums */
-typedef enum {IMMEDIATE, ABSOLUTE, MOVE} Addressing_mode;
+typedef enum {IMPLIED,
+              IMMEDIATE,
+              ABSOLUTE,
+              ABSOLUTE_INDEXED_X,
+              ABSOLUTE_INDEXED_Y,
+              MOVE,
+              INDIRECT,
+              INDIRECT_INDEXED_Y,
+              INDEXED_INDIRECT_X,
+              INDIRECT_LONG,
+              INDIRECT_LONG_INDEXED_Y,
+              STACK_RELATIVE,
+              SR_INDIRECT_INDEXED
+              } Addressing_mode;
 typedef enum {SYMBOL, NUMBER} Expr_type;
 typedef enum {ERROR, OK} Status;
 
@@ -16,6 +34,7 @@ typedef struct {
   Expr_type type;
   union {
     int num;
+    char* sym;
   } e;
 } Expr;
 
@@ -41,9 +60,15 @@ typedef struct Line_tag {
 /* prototypes */
 Status read_file(FILE* fp);
 void strip_comment(char* line);
+void add_line(Line* line);
 char* get_label(char* l, char** label);
 char* get_instruction(char* l, char** instruction);
 Status get_operand(char* lp, Line* l);
+Status read_expr(char** lp, Expr* expr);
+Status read_dec(char** lp, int* n);
+Status read_hex(char** lp, int* n);
+Status read_bin(char** lp, int* n);
+Status read_sym(char** lp, char** sym);
 void write_assembled(FILE* fp);
 
 int line_num = 0;
@@ -117,7 +142,7 @@ Line* alloc_line() {
 Status read_file(FILE* fp) {
   char l[LINE_LENGTH];
 
-  while(read_line(fp, l)) {
+  while(fgets(l, LINE_LENGTH, fp)) {
     char* lp;
     char* label;
     Line* line = alloc_line();
@@ -135,6 +160,12 @@ Status read_file(FILE* fp) {
     if(line->label || line->instruction)
       add_line(line);
   }
+  if(!feof(fp)) {
+    fprintf(stderr, "Error: reading from input file\n");
+    return ERROR;
+  }
+
+  return OK;
 }
 
 /* "removes" comments by truncating a string when it detects one */
@@ -143,6 +174,18 @@ void strip_comment(char* line) {
     line++;
   *line = '\n';
   *(line+1) = '\0';
+}
+
+void add_line(Line* line) {
+  Line* lp;
+  if(!first_line)
+    first_line = lp;
+  else {
+    lp = first_line;
+    while(lp->next)
+      lp = lp->next;
+    lp->next = line;
+  }
 }
 
 /* returns a pointer to the end of the label if there was one,
@@ -232,7 +275,8 @@ Status get_operand(char* lp, Line* line) {
 
     /* skip past the # and read the expression */
     lp++;
-    line->expr1 = read_expr(*lp);
+    if(read_expr(&lp, line->expr1) != OK)
+      return ERROR;
   }
   /* if the operand starts with a [, it's indirect long */
   else if(*lp == '[') {
@@ -241,7 +285,8 @@ Status get_operand(char* lp, Line* line) {
     while(*lp && isspace(*lp)) lp++;
 
     /* read in the expression in the []s */
-    line->expr1 = read_expr(&lp);
+    if(read_expr(&lp, line->expr1) != OK)
+      return ERROR;
 
     /* skip whitespace */
     while(*lp && isspace(*lp)) lp++;
@@ -277,7 +322,8 @@ Status get_operand(char* lp, Line* line) {
     /* skip whitespace after the paren */
     while(*lp && isspace(*lp)) lp++;
     
-    line->expr1 = read_expr(&lp);
+    if(read_expr(&lp, line->expr1) != OK)
+      return ERROR;
 
     /* skip whitespace after the expr */
     while(*lp && isspace(*lp)) lp++;
@@ -368,7 +414,8 @@ Status get_operand(char* lp, Line* line) {
      indexed: lda $01, X ; lda $01, Y ; lda $01, S
      move: mvn $01, $02 */
   else {
-    line->expr1 = read_expr(&lp);
+    if(read_expr(&lp, line->expr1) != OK)
+      return ERROR;
     /* skip whitespace */
     while(*lp && isspace(*lp)) lp++;
     
@@ -387,7 +434,8 @@ Status get_operand(char* lp, Line* line) {
       case 'x': line->addr_mode = ABSOLUTE_INDEXED_X; lp++; break;
       case 'y': line->addr_mode = ABSOLUTE_INDEXED_Y; lp++; break;
       case 's': line->addr_mode = STACK_RELATIVE; lp++; break;
-      default: line->expr2 = read_expr(&lp);
+      default: if(read_expr(&lp, line->expr1) != OK)
+                 return ERROR;
                line->addr_mode = MOVE;
       }
     }
@@ -402,6 +450,72 @@ Status get_operand(char* lp, Line* line) {
     return error("unexpected %s", lp);
   return OK;
 }  
+
+Status read_expr(char** lp, Expr* expr) {
+  if(isdigit(**lp)) {
+    expr->type = NUMBER;
+    return read_dec(lp, &expr->e.num);
+  }
+  else if(**lp == '%') {
+    expr->type = NUMBER;
+    (*lp)++;
+    return read_bin(lp, &expr->e.num);
+  }
+  else if(**lp == '$') {
+    expr->type = NUMBER;
+    (*lp)++;
+    return read_hex(lp, &expr->e.num);
+  }
+  else {
+    expr->type = SYMBOL;
+    return read_sym(lp, &expr->e.sym);
+  }
+}
+
+Status read_dec(char** lp, int* n) {
+  while(**lp && !isspace(**lp)) {
+    if(!isdigit(**lp))
+      return error("unexpected '%c' in numerical constant", **lp);
+    *n = *n * 10 + (**lp - '0');
+    (*lp)++;
+  }
+  return OK;
+}
+
+Status read_hex(char** lp, int* n) {
+  while(**lp && !isspace(**lp)) {
+    if(!isxdigit(**lp))
+      return error("unexpected '%c' in numerical constant", **lp);
+    if(isdigit(**lp))
+      *n = *n * 16 + (**lp - '0');
+    else /* is A-F */
+      *n = *n * 16 + (10 + tolower(**lp) - 'a');
+    (*lp)++;
+  }
+  return OK;
+}
+
+Status read_bin(char** lp, int* n) {
+  while(**lp && !isspace(**lp)) {
+    if(**lp != '0' && **lp != '1')
+      return error("unexpected '%c' in numerical constant", **lp);
+    *n = *n * 2 + (**lp - '0');
+    (*lp)++;
+  }
+  return OK;
+}
+
+Status read_sym(char** lp, char** sym) {
+  char backup;
+  char* lp2 = *lp;
+  while(*lp2 && isalnum(*lp2) || *lp2 == '_' || *lp2 == '.') lp2++;
+  backup = *lp2;
+  *lp2 = '\0';
+  *sym = intern_symbol(*lp);
+  *lp2 = backup;
+  *lp = lp2;
+  return OK;
+}
 
 /* iterates through the assembled lines, writing each to disk */
 void write_assembled(FILE* fp) {
