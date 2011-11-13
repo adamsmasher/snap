@@ -1,3 +1,24 @@
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+/* defines */
+#define LINE_LENGTH 256
+
+/* enums */
+typedef enum {IMMEDIATE, ABSOLUTE, MOVE} Addressing_mode;
+typedef enum {SYMBOL, NUMBER} Expr_type;
+typedef enum {ERROR, OK} Status;
+
+/* structures */
+typedef struct {
+  Expr_type type;
+  union {
+    int num;
+  } e;
+} Expr;
+
 typedef struct Line_tag {
   /* linked list pointer */
   struct Line_tag* next;
@@ -17,11 +38,16 @@ typedef struct Line_tag {
   char bytes[4];
 } Line;
 
-typedef enum {IMMEDIATE, ABSOLUTE, MOVE} Addressing_mode;
+/* prototypes */
+Status read_file(FILE* fp);
+void strip_comment(char* line);
+char* get_label(char* l, char** label);
+char* get_instruction(char* l, char** instruction);
+Status get_operand(char* lp, Line* l);
+void write_assembled(FILE* fp);
 
-typedef enum {SYMBOL, NUMBER} Expr_type;
-
-typedef enum {ERROR, OK} Status;
+int line_num = 0;
+Line* first_line = NULL;
 
 /* prints an error message, along with position information, to stderr.
    return ERROR */
@@ -33,7 +59,7 @@ Status error(const char * format, ...) {
   vfprintf(stderr, format, args);
   fprintf(stderr, " on line %d\n", line_num);
 
-  va_end(args)
+  va_end(args);
   return ERROR;
 }
 
@@ -94,7 +120,7 @@ Status read_file(FILE* fp) {
   while(read_line(fp, l)) {
     char* lp;
     char* label;
-    Line* l = alloc_line();
+    Line* line = alloc_line();
     line_num++;
     strip_comment(l);
     lp = get_label(l, &line->label);
@@ -104,7 +130,8 @@ Status read_file(FILE* fp) {
     if(!lp)
       return ERROR;
     if(line->instruction)
-      lp = get_operand(lp, line);
+      if(get_operand(lp, line) != OK)
+        return ERROR;
     if(line->label || line->instruction)
       add_line(line);
   }
@@ -112,7 +139,7 @@ Status read_file(FILE* fp) {
 
 /* "removes" comments by truncating a string when it detects one */
 void strip_comment(char* line) {
-  while(*line && line != ';')
+  while(*line && *line != ';')
     line++;
   *line = '\n';
   *(line+1) = '\0';
@@ -191,7 +218,7 @@ char* get_instruction(char* l, char** instruction) {
   return lp;
 }
 
-Status get_operand(char* lp, Line* l) {
+Status get_operand(char* lp, Line* line) {
   /* skip whitespace */
   while(*lp && isspace(*lp)) lp++;
   
@@ -236,7 +263,7 @@ Status get_operand(char* lp, Line* l) {
       /* expect Y */
       if(tolower(*lp) != 'y')
         return expected('Y', *lp);
-      line->addr_mode = INDIRECT_LONG_INDEXED_Y
+      line->addr_mode = INDIRECT_LONG_INDEXED_Y;
       /* move past the Y */
       lp++;
     }
@@ -357,10 +384,11 @@ Status get_operand(char* lp, Line* l) {
       while(*lp && isspace(*lp));
     
       switch(tolower(*lp)) {
-      case 'x': addr_mode = ABSOLUTE_INDEXED_X; lp++; break;
-      case 'y': addr_mode = ABSOLUTE_INDEXED_Y; lp++; break;
-      case 's': addr_mode = STACK_RELATIVE; lp++; break;
+      case 'x': line->addr_mode = ABSOLUTE_INDEXED_X; lp++; break;
+      case 'y': line->addr_mode = ABSOLUTE_INDEXED_Y; lp++; break;
+      case 's': line->addr_mode = STACK_RELATIVE; lp++; break;
       default: line->expr2 = read_expr(&lp);
+               line->addr_mode = MOVE;
       }
     }
     /* anything else following the expression is unexpected, will be handled
@@ -378,7 +406,7 @@ Status get_operand(char* lp, Line* l) {
 /* iterates through the assembled lines, writing each to disk */
 void write_assembled(FILE* fp) {
   Line* lp = first_line;
-  while(*lp) {
+  while(lp) {
     fwrite(lp->bytes, 1, lp->byte_size, fp);
     lp = lp->next;
   }
