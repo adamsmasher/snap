@@ -11,6 +11,9 @@
 
 #define CLC 0x18
 
+#define STZ_ABS 0x9C
+#define STZ_DP 0x64
+
 #define XCE 0xFB
 
 #define LO(x) ((char)(x))
@@ -100,6 +103,35 @@ Status org(Line* line) {
 
   return OK;
 }
+
+Status stz(Line* line) {
+  int operand;
+
+  if(eval(line->expr1, &operand) != OK)
+    return ERROR;
+
+  switch(line->addr_mode) {
+  case ABSOLUTE:
+    if(operand <= 0xFF) {
+      line->byte_size = 2;
+      line->bytes[0] = STZ_DP;
+    }
+    else if(operand <= 0xFFFF) {
+      line->byte_size = 3;
+      line->bytes[0] = STZ_ABS;
+    }
+    else
+      return operand_too_large(operand);
+    line->bytes[1] = LO(operand);
+    line->bytes[2] = MID(operand);
+    break;
+  default:
+    return invalid_operand(line);
+  }
+
+  return OK;
+}
+
 
 Status xce(Line* line) {
   switch(line->addr_mode) {

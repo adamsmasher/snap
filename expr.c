@@ -8,7 +8,9 @@ Status eval(Expr* e, int* result) {
     *result = e->e.num;
     return OK;
   case SYMBOL:
-    return sym_val(e->e.sym, result);
+    if(sym_val(e->e.sym, result) != OK)
+      return error("undefined symbol '%s'", e->e.sym);
+    return OK;
   default: return ERROR;
   }
 }

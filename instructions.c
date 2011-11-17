@@ -25,6 +25,7 @@ void init_instructions() {
     {"adc", adc},
     {"clc", clc},
     {"org", org},
+    {"stz", stz},
     {"xce", xce}
   };
 

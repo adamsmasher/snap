@@ -2,6 +2,7 @@
 
 #include "error.h"
 #include "instructions.h"
+#include "labels.h"
 #include "lines.h"
 #include "parse.h"
 
@@ -33,6 +34,7 @@ int main(int argc, char** argv) {
 
   /* initialization */
   init_instructions();
+  init_symtable();
 
   /* open up the infile and load it into a global list of lines */
   fp = fopen(argv[1], "r");
@@ -66,13 +68,15 @@ Status assemble() {
 
   while(lp) {
     line_num = lp->line_num;
-    /* lookup the handler for the instruction */
-    if(!(f = get_handler(lp->instruction)))
-      return error("unknown instruction '%s'", lp->instruction);
-    /* run the instruction - it will modify the line globally */
-    if(f(lp) != OK)
-      return ERROR; 
-
+    /* assemble the instruction */
+    if(lp->instruction) {
+      /* lookup the handler for the instruction */
+      if(!(f = get_handler(lp->instruction)))
+        return error("unknown instruction '%s'", lp->instruction);
+      /* run the instruction - it will modify the line globally */
+      if(f(lp) != OK)
+        return ERROR; 
+    }
     lp = lp->next;
   }
   return OK;
