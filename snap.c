@@ -14,6 +14,7 @@ int usage() {
 }
 
 /* globals */
+int pc = 0;
 int acc16 = 0;
 int index16 = 0;
 int line_num = 0;

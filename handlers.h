@@ -5,5 +5,6 @@
 #include "lines.h"
 
 Status adc(Line* line);
+Status org(Line* line);
 
 #endif

@@ -21,7 +21,7 @@ Instruction_entry instruction_table[INSTRUCTION_BUCKETS];
 void init_instructions() {
   int i;
   Instruction_entry default_table[] = {
-    {"adc", adc}
+    {"adc", adc},
     {"org", org}
   };
 
