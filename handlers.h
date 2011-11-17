@@ -7,5 +7,6 @@
 Status adc(Line* line);
 Status clc(Line* line);
 Status org(Line* line);
+Status xce(Line* line);
 
 #endif

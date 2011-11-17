@@ -11,6 +11,8 @@
 
 #define CLC 0x18
 
+#define XCE 0xFB
+
 #define LO(x) ((char)(x))
 #define MID(x) ((char)((x) >> 8))
 #define HI(x) ((char)((x) >> 16))
@@ -91,6 +93,19 @@ Status org(Line* line) {
       pc = operand;
     else
       return operand_too_large(operand);
+    break;
+  default:
+    return invalid_operand(line);
+  }
+
+  return OK;
+}
+
+Status xce(Line* line) {
+  switch(line->addr_mode) {
+  case IMPLIED:
+    line->byte_size = 1;
+    line->bytes[0] = XCE;
     break;
   default:
     return invalid_operand(line);

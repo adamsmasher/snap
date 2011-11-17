@@ -24,7 +24,8 @@ void init_instructions() {
   Instruction_entry default_table[] = {
     {"adc", adc},
     {"clc", clc},
-    {"org", org}
+    {"org", org},
+    {"xce", xce}
   };
 
   /* set safe dummy values for the table */
