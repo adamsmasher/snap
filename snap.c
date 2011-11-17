@@ -68,7 +68,7 @@ Status assemble() {
   while(lp) {
     /* lookup the handler for the instruction */
     if(!(f = get_handler(lp->instruction)))
-      return error("unknown instruction %s", lp->instruction);
+      return error("unknown instruction '%s'", lp->instruction);
     /* run the instruction - it will modify the line globally */
     if(f(lp) != OK)
       return ERROR; 

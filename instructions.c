@@ -4,6 +4,7 @@
 #include "table.h"
 
 #include <string.h>
+#include <strings.h>
 
 #define INSTRUCTION_BUCKETS 512
 
@@ -70,10 +71,10 @@ void add_handler(char* instruction_name, Handler handler) {
    Simply testing if the slot is empty i.e. if(instruction_table[i].name) will
    tell you what you need to know */
 int lookup_instruction(char* instruction) {
-  unsigned int i = hash_str(instruction) % INSTRUCTION_BUCKETS;
+  unsigned int i = hash_stri(instruction) % INSTRUCTION_BUCKETS;
 
   while(instruction_table[i].name && 
-        strcmp(instruction, instruction_table[i].name))
+        strcasecmp(instruction, instruction_table[i].name))
     i = (i + 1) % INSTRUCTION_BUCKETS;
 
   return i;
