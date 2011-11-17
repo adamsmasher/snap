@@ -22,6 +22,8 @@ typedef struct Line_tag {
   /* linked list pointer */
   struct Line_tag* next;
 
+  int line_num;
+
   char* label;
 
   char* instruction;

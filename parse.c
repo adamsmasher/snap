@@ -31,6 +31,7 @@ Status read_file(FILE* fp) {
     char* lp;
     Line* line = alloc_line();
     line_num++;
+    line->line_num = line_num;
     strip_comment(l);
     lp = get_label(l, &line->label);
     if(!lp)

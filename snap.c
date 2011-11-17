@@ -64,8 +64,8 @@ Status assemble() {
   Handler f;
   Line* lp = first_line;
 
-  line_num = 1;
   while(lp) {
+    line_num = lp->line_num;
     /* lookup the handler for the instruction */
     if(!(f = get_handler(lp->instruction)))
       return error("unknown instruction '%s'", lp->instruction);
@@ -74,7 +74,6 @@ Status assemble() {
       return ERROR; 
 
     lp = lp->next;
-    line_num++;
   }
   return OK;
 }
