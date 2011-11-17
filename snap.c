@@ -60,8 +60,10 @@ int main(int argc, char** argv) {
 }
 
 Status assemble() {
-  Line* lp = first_line;
   Handler f;
+  Line* lp = first_line;
+
+  line_num = 1;
   while(lp) {
     /* lookup the handler for the instruction */
     if(!(f = get_handler(lp->instruction)))
@@ -71,6 +73,7 @@ Status assemble() {
       return ERROR; 
 
     lp = lp->next;
+    line_num++;
   }
   return OK;
 }
