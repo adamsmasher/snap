@@ -23,6 +23,7 @@ void init_instructions() {
   int i;
   Instruction_entry default_table[] = {
     {"adc", adc},
+    {"clc", clc},
     {"org", org}
   };
 
