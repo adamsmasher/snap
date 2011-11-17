@@ -1,6 +1,8 @@
 #include "parse.h"
 
 #include "error.h"
+#include "instructions.h"
+#include "labels.h"
 #include "lines.h"
 #include "snap.h"
 
@@ -27,7 +29,6 @@ Status read_file(FILE* fp) {
 
   while(fgets(l, LINE_LENGTH, fp)) {
     char* lp;
-    char* label;
     Line* line = alloc_line();
     line_num++;
     strip_comment(l);
@@ -95,7 +96,7 @@ static char* get_label(char* l, char** label) {
     /* copy the label into fresh storage */
     *label = malloc(len + 1);
     memcpy(*label, l, len);
-    *label[len] = '\0';
+    (*label)[len] = '\0';
 
     /* return a pointer to after the label */
     l = lp+1;
@@ -146,6 +147,7 @@ static Status get_operand(char* lp, Line* line) {
 
     /* skip past the # and read the expression */
     lp++;
+    line->expr1 = malloc(sizeof(Expr));
     if(read_expr(&lp, line->expr1) != OK)
       return ERROR;
   }
@@ -156,6 +158,7 @@ static Status get_operand(char* lp, Line* line) {
     while(*lp && isspace(*lp)) lp++;
 
     /* read in the expression in the []s */
+    line->expr1 = malloc(sizeof(Expr));
     if(read_expr(&lp, line->expr1) != OK)
       return ERROR;
 
@@ -193,6 +196,7 @@ static Status get_operand(char* lp, Line* line) {
     /* skip whitespace after the paren */
     while(*lp && isspace(*lp)) lp++;
     
+    line->expr1 = malloc(sizeof(Expr));
     if(read_expr(&lp, line->expr1) != OK)
       return ERROR;
 
@@ -285,6 +289,7 @@ static Status get_operand(char* lp, Line* line) {
      indexed: lda $01, X ; lda $01, Y ; lda $01, S
      move: mvn $01, $02 */
   else {
+    line->expr1 = malloc(sizeof(Expr));
     if(read_expr(&lp, line->expr1) != OK)
       return ERROR;
     /* skip whitespace */
@@ -305,9 +310,11 @@ static Status get_operand(char* lp, Line* line) {
       case 'x': line->addr_mode = ABSOLUTE_INDEXED_X; lp++; break;
       case 'y': line->addr_mode = ABSOLUTE_INDEXED_Y; lp++; break;
       case 's': line->addr_mode = STACK_RELATIVE; lp++; break;
-      default: if(read_expr(&lp, line->expr1) != OK)
-                 return ERROR;
-               line->addr_mode = MOVE;
+      default: 
+        line->expr2 = malloc(sizeof(Expr));
+        if(read_expr(&lp, line->expr2) != OK)
+          return ERROR;
+        line->addr_mode = MOVE;
       }
     }
     /* anything else following the expression is unexpected, will be handled
@@ -379,7 +386,7 @@ static Status read_bin(char** lp, int* n) {
 static Status read_sym(char** lp, char** sym) {
   char backup;
   char* lp2 = *lp;
-  while(*lp2 && isalnum(*lp2) || *lp2 == '_' || *lp2 == '.') lp2++;
+  while(*lp2 && (isalnum(*lp2) || *lp2 == '_' || *lp2 == '.')) lp2++;
   backup = *lp2;
   *lp2 = '\0';
   *sym = intern_symbol(*lp);

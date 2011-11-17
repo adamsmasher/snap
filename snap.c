@@ -1,7 +1,9 @@
 #include "snap.h"
 
 #include "error.h"
+#include "instructions.h"
 #include "lines.h"
+#include "parse.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,6 +14,8 @@ int usage() {
 }
 
 /* globals */
+int acc16 = 0;
+int index16 = 0;
 int line_num = 0;
 
 /* prototypes */
@@ -25,6 +29,9 @@ int main(int argc, char** argv) {
   /* we require an infile and an outfile */
   if(argc != 3)
     return usage();
+
+  /* initialization */
+  init_instructions();
 
   /* open up the infile and load it into a global list of lines */
   fp = fopen(argv[1], "r");
@@ -54,7 +61,15 @@ int main(int argc, char** argv) {
 
 Status assemble() {
   Line* lp = first_line;
+  Handler f;
   while(lp) {
+    /* lookup the handler for the instruction */
+    if(!(f = get_handler(lp->instruction)))
+      return error("unknown instruction %s", lp->instruction);
+    /* run the instruction - it will modify the line globally */
+    if(f(lp) != OK)
+      return ERROR; 
+
     lp = lp->next;
   }
   return OK;

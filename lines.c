@@ -18,12 +18,13 @@ Line* alloc_line() {
 void add_line(Line* line) {
   Line* lp;
   if(!first_line)
-    first_line = lp;
+    first_line = line;
   else {
     lp = first_line;
     while(lp->next)
       lp = lp->next;
     lp->next = line;
+    line->next = NULL;
   }
 }
 
