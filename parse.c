@@ -286,16 +286,27 @@ static Status get_operand(char* lp, Line* line) {
        the end of this function*/
   }
   /* otherwise it's:
+     accumulator: lda A
      absolute: lda $01
      indexed: lda $01, X ; lda $01, Y ; lda $01, S
      move: mvn $01, $02 */
   else {
+    if(tolower(*lp) == 'a') {
+      char* lookahead = lp;
+      lookahead++;
+      while(*lookahead && isspace(*lookahead)) lookahead++;
+      if(!*lookahead) {
+        line->addr_mode = ACCUMULATOR;
+        lp = lookahead;
+        return OK;
+      }
+    }
     line->expr1 = malloc(sizeof(Expr));
     if(read_expr(&lp, line->expr1) != OK)
       return ERROR;
     /* skip whitespace */
     while(*lp && isspace(*lp)) lp++;
-    
+
     /* if we're at the end of the line, it's absolute */
     if(!*lp)
       line->addr_mode = ABSOLUTE;
@@ -318,10 +329,9 @@ static Status get_operand(char* lp, Line* line) {
         line->addr_mode = MOVE;
       }
     }
-    /* anything else following the expression is unexpected, will be handled
-       at the end of this function */
+  /* anything else following the expression is unexpected, will be handled
+     at the end of this function */
   }
-
   /* clear any extraneous whitespace */
   while(*lp && isspace(*lp)) lp++;
 

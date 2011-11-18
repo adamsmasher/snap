@@ -4,6 +4,9 @@
 #include "snap.h"
 
 Status eval(Expr* e, int* result) {
+  if(!e)
+    return OK;
+
   switch(e->type) {
   case NUMBER:
     *result = e->e.num;

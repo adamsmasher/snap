@@ -3,7 +3,8 @@
 
 #include "expr.h"
 
-typedef enum {IMPLIED,
+typedef enum {ACCUMULATOR,
+              IMPLIED,
               IMMEDIATE,
               ABSOLUTE,
               ABSOLUTE_INDEXED_X,

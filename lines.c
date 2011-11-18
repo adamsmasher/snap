@@ -11,6 +11,8 @@ Line* alloc_line() {
     l->label = NULL;
     l->instruction = NULL;
     l->byte_size = -1;
+    l->expr1 = NULL;
+    l->expr2 = NULL;
   }
   return l;
 }
