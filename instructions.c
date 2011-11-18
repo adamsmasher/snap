@@ -24,6 +24,7 @@ void init_instructions() {
   Instruction_entry default_table[] = {
     {"adc", adc},
     {"clc", clc},
+    {"lda", lda},
     {"org", org},
     {"stz", stz},
     {"xce", xce}

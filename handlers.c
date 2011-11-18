@@ -4,12 +4,16 @@
 #include "lines.h"
 #include "snap.h"
 
-#define ADC_IMM 0x69
-#define ADC_DP 0x65
-#define ADC_ABS 0x6D
-#define ADC_ABS_LONG 0x6F
+#define PRIMARY_IMM 0x09
+#define PRIMARY_DP 0x05
+#define PRIMARY_ABS 0x0D
+#define PRIMARY_ABS_LONG 0x0F
+
+#define ADC_BASE 0x60
 
 #define CLC 0x18
+
+#define LDA_BASE 0xA0
 
 #define STZ_ABS 0x9C
 #define STZ_DP 0x64
@@ -28,7 +32,7 @@ Status operand_too_large(int operand) {
   return error("operand %d too large", operand);
 }
 
-Status adc(Line* line) {
+static Status primary(Line* line, int base, int sixteen_bit) {
   int operand;
 
   if(eval(line->expr1, &operand) != OK) {
@@ -51,24 +55,24 @@ Status adc(Line* line) {
   switch(line->addr_mode) {
   case IMMEDIATE:
     line->byte_size = acc16 ? 3 : 2;
-    line->bytes[0] = ADC_IMM;
+    line->bytes[0] = base + PRIMARY_IMM;
     line->bytes[1] = LO(operand);
-    if(acc16) line->bytes[2] = MID(operand);
+    if(sixteen_bit) line->bytes[2] = MID(operand);
     else if(operand > 0xFF)
       return operand_too_large(operand);
     break;
   case ABSOLUTE:
     if(operand <= 0xFF) {
       line->byte_size = 2;
-      line->bytes[0] = ADC_DP;
+      line->bytes[0] = base + PRIMARY_DP;
     }
     else if(operand <= 0xFFFF) {
       line->byte_size = 3;
-      line->bytes[0] = ADC_ABS;
+      line->bytes[0] = base + PRIMARY_ABS;
     }
     else if(operand <= 0xFFFFFF) {
       line->byte_size = 4;
-      line->bytes[0] = ADC_ABS_LONG;
+      line->bytes[0] = base + PRIMARY_ABS_LONG;
     }
     else
       return operand_too_large(operand);
@@ -83,6 +87,10 @@ Status adc(Line* line) {
   return OK;
 }
 
+Status adc(Line* line) {
+  return primary(line, ADC_BASE, acc16);
+}
+
 Status clc(Line* line) {
   switch(line->addr_mode) {
   case IMPLIED:
@@ -94,6 +102,10 @@ Status clc(Line* line) {
   }
 
   return OK;
+}
+
+Status lda(Line* line) {
+  return primary(line, LDA_BASE, acc16);
 }
 
 Status org(Line* line) {
