@@ -31,8 +31,22 @@ Status operand_too_large(int operand) {
 Status adc(Line* line) {
   int operand;
 
-  if(eval(line->expr1, &operand) != OK)
-    return ERROR;
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else {
+      /* set byte_size, assuming the worst */
+      switch(line->addr_mode) {
+      case IMMEDIATE:
+        line->byte_size = 3;
+        return OK;
+      case ABSOLUTE:
+        line->byte_size = 4;
+        return OK;
+      default: return invalid_operand(line);
+      }
+    }
+  }
 
   switch(line->addr_mode) {
   case IMMEDIATE:
@@ -85,8 +99,8 @@ Status clc(Line* line) {
 Status org(Line* line) {
   int operand;
 
-  if(eval(line->expr1, &operand) != OK)
-    return ERROR;
+  if(eval(line->expr1, &operand) != OK) 
+    return error("ORG directive must be known on first pass");
 
   line->byte_size = 0;
 
@@ -107,8 +121,14 @@ Status org(Line* line) {
 Status stz(Line* line) {
   int operand;
 
-  if(eval(line->expr1, &operand) != OK)
-    return ERROR;
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else {
+      line->byte_size = 3;
+      return OK;
+    }
+  }
 
   switch(line->addr_mode) {
   case ABSOLUTE:

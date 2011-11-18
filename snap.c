@@ -15,10 +15,11 @@ int usage() {
 }
 
 /* globals */
-int pc = 0;
 int acc16 = 0;
 int index16 = 0;
 int line_num = 0;
+int pass = 0;
+int pc = 0;
 
 /* prototypes */
 Status assemble();
@@ -73,9 +74,9 @@ Status assemble() {
       /* lookup the handler for the instruction */
       if(!(f = get_handler(lp->instruction)))
         return error("unknown instruction '%s'", lp->instruction);
-      /* run the instruction - it will modify the line globally */
       if(f(lp) != OK)
         return ERROR; 
+      pc += lp->byte_size;
     }
     lp = lp->next;
   }

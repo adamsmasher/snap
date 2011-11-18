@@ -1,6 +1,7 @@
 #include "expr.h"
 
 #include "labels.h"
+#include "snap.h"
 
 Status eval(Expr* e, int* result) {
   switch(e->type) {
@@ -8,8 +9,12 @@ Status eval(Expr* e, int* result) {
     *result = e->e.num;
     return OK;
   case SYMBOL:
-    if(sym_val(e->e.sym, result) != OK)
-      return error("undefined symbol '%s'", e->e.sym);
+    if(sym_val(e->e.sym, result) != OK) {
+      if(pass) 
+          return error("undefined symbol '%s'", e->e.sym);
+      else
+          return ERROR;
+    }
     return OK;
   default: return ERROR;
   }
