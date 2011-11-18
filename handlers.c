@@ -11,6 +11,8 @@
 
 #define ADC_BASE 0x60
 
+#define AND_BASE 0x20
+
 #define CLC 0x18
 
 #define INC_ACC 0x1A
@@ -93,6 +95,10 @@ static Status primary(Line* line, int base, int sixteen_bit) {
 
 Status adc(Line* line) {
   return primary(line, ADC_BASE, acc16);
+}
+
+Status and(Line* line) {
+  return primary(line, AND_BASE, acc16);
 }
 
 Status clc(Line* line) {
