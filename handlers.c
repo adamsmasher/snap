@@ -61,7 +61,13 @@
 
 #define PLD 0x2B
 
+#define PLY 0x7A
+
 #define RTL 0x6B
+
+#define SBC_BASE 0xE0
+
+#define SEC 0x38
 
 #define STA_DP 0x85
 #define STA_ABS 0x8D
@@ -572,7 +578,10 @@ Status pea(Line* line) {
 Status pha(Line* line) { return implicit(line, PHA); }
 Status pla(Line* line) { return implicit(line, PLA); }
 Status pld(Line* line) { return implicit(line, PLD); }
+Status ply(Line* line) { return implicit(line, PLY); }
 Status rtl(Line* line) { return implicit(line, RTL); }
+Status sbc(Line* line) { return primary(line, SBC_BASE, acc16); }
+Status sec(Line* line) { return implicit(line, SEC); }
 
 Status sta(Line* line) {
   int operand;
