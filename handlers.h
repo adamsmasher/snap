@@ -12,6 +12,7 @@ Status bne(Line* line);
 Status clc(Line* line);
 Status dex(Line* line);
 Status inc(Line* line);
+Status jmp(Line* line);
 Status jsr(Line* line);
 Status lda(Line* line);
 Status lsr(Line* line);
@@ -25,6 +26,7 @@ Status sta(Line* line);
 Status stz(Line* line);
 Status tas(Line* line);
 Status tax(Line* line);
+Status tsa(Line* line);
 Status xce(Line* line);
 
 #endif

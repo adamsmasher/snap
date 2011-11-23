@@ -30,6 +30,7 @@ void init_instructions() {
     {"clc", clc},
     {"dex", dex},
     {"inc", inc},
+    {"jmp", jmp},
     {"jsr", jsr},
     {"lda", lda},
     {"lsr", lsr},
@@ -44,6 +45,8 @@ void init_instructions() {
     {"tas", tas},
     {"tax", tax},
     {"tcs", tas},
+    {"tsa", tsa},
+    {"tsc", tsa},
     {"xce", xce}
   };
 

@@ -29,6 +29,9 @@
 #define INC_DP 0xE6
 #define INC_ABS 0xEE
 
+#define JMP_ABS                  0x4C
+#define JMP_ABS_INDEXED_INDIRECT 0x7C
+
 #define JSR_ABS                  0x20
 #define JSR_ABS_INDEXED_INDIRECT 0xFC
 
@@ -58,6 +61,8 @@
 #define TAS 0x1B
 
 #define TAX 0xAA
+
+#define TSA 0x3B
 
 #define XCE 0xFB
 
@@ -297,6 +302,32 @@ Status inc(Line* line) {
   return OK;
 }
 
+Status jmp(Line* line) {
+  int operand;
+
+  line->byte_size = 3;
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else 
+      return OK;
+  }
+
+  switch(line->addr_mode) {
+  case ABSOLUTE:
+    if(HI(operand) != HI(pc))
+      return jump_out_of_bounds(line);
+    line->bytes[0] = JMP_ABS;
+    line->bytes[1] = LO(operand);
+    line->bytes[2] = MID(operand);
+    break;
+  default: return invalid_operand(line);
+  }
+
+  return OK;
+}
+
+
 Status jsr(Line* line) {
   int operand;
 
@@ -495,5 +526,6 @@ Status stz(Line* line) {
 
 Status tas(Line* line) { return implicit(line, TAS); }
 Status tax(Line* line) { return implicit(line, TAX); }
+Status tsa(Line* line) { return implicit(line, TSA); }
 Status xce(Line* line) { return implicit(line, XCE); }
 
