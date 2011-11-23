@@ -15,6 +15,7 @@ Status inc(Line* line);
 Status jmp(Line* line);
 Status jsr(Line* line);
 Status lda(Line* line);
+Status ldx(Line* line);
 Status lsr(Line* line);
 Status org(Line* line);
 Status pea(Line* line);

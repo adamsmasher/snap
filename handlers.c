@@ -37,6 +37,10 @@
 
 #define LDA_BASE 0xA0
 
+#define LDX_IMM 0xA2
+#define LDX_DP 0xA6
+#define LDX_ABS 0xAE
+
 #define LSR_ACC 0x4A
 #define LSR_ABS 0x4E
 #define LSR_DP 0x46
@@ -358,20 +362,46 @@ Status lda(Line* line) {
   return primary(line, LDA_BASE, acc16);
 }
 
-Status org(Line* line) {
+Status ldx(Line* line) {
   int operand;
 
-  if(eval(line->expr1, &operand) != OK) 
-    return error("ORG directive must be known on first pass");
-
-  line->byte_size = 0;
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else {
+      switch(line->addr_mode) {
+      case IMMEDIATE: 
+        line->byte_size = index16 ? 3 : 2;
+        break;
+      case ABSOLUTE:
+        line->byte_size = 3;
+        break;
+      default: return invalid_operand(line);
+      }
+      return OK;
+    }
+  }
 
   switch(line->addr_mode) {
+  case IMMEDIATE:
+    line->byte_size = index16 ? 3 : 2;
+    line->bytes[0] = LDX_IMM;
+    line->bytes[1] = LO(operand);
+    line->bytes[2] = MID(operand);
+    break;
   case ABSOLUTE:
-    if(operand <= 0xFFFFFF)
-      pc = operand;
+    if(operand <= 0xFF) {
+      line->byte_size = 2;
+      line->bytes[0] = LDX_DP;
+    }
+    else if(operand <= 0xFFFF) {
+      line->byte_size = 3;
+      line->bytes[0] = LDX_ABS;
+    }
     else
       return operand_too_large(operand);
+    line->bytes[1] = LO(operand);
+    line->bytes[2] = MID(operand);
     break;
   default:
     return invalid_operand(line);
@@ -417,6 +447,29 @@ Status lsr(Line* line) {
 
   return OK;
 }
+
+Status org(Line* line) {
+  int operand;
+
+  if(eval(line->expr1, &operand) != OK) 
+    return error("ORG directive must be known on first pass");
+
+  line->byte_size = 0;
+
+  switch(line->addr_mode) {
+  case ABSOLUTE:
+    if(operand <= 0xFFFFFF)
+      pc = operand;
+    else
+      return operand_too_large(operand);
+    break;
+  default:
+    return invalid_operand(line);
+  }
+
+  return OK;
+}
+
 
 Status pea(Line* line) {
   int operand;

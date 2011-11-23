@@ -33,6 +33,7 @@ void init_instructions() {
     {"jmp", jmp},
     {"jsr", jsr},
     {"lda", lda},
+    {"ldx", ldx},
     {"lsr", lsr},
     {"org", org},
     {"pea", pea},
