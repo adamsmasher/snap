@@ -13,11 +13,16 @@
 
 #define AND_BASE 0x20
 
+#define BNE 0xD0
+
 #define CLC 0x18
 
 #define INC_ACC 0x1A
 #define INC_DP 0xE6
 #define INC_ABS 0xEE
+
+#define JSR_ABS                  0x20
+#define JSR_ABS_INDEXED_INDIRECT 0xFC
 
 #define LDA_BASE 0xA0
 
@@ -37,6 +42,23 @@ Status invalid_operand(Line* line) {
 Status operand_too_large(int operand) {
   return error("operand %d too large", operand);
 }
+
+Status branch_out_of_bounds(Line* line) {
+  if(line->expr1->type == SYMBOL)
+    return error("destination %s must be within 128 bytes of branch",
+                 line->expr1->e.sym);  
+  else
+    return error("destination must be within 128 bytes of branch");
+}
+
+Status jump_out_of_bounds(Line* line) {
+  if(line->expr1->type == SYMBOL)
+    return error("destination %s must be within same bank as jump",
+                 line->expr1->e.sym);  
+  else
+    return error("destination must be within same bank as jump");
+}
+
 
 static Status primary(Line* line, int base, int sixteen_bit) {
   int operand;
@@ -101,6 +123,32 @@ Status and(Line* line) {
   return primary(line, AND_BASE, acc16);
 }
 
+Status bne(Line* line) {
+  int operand;
+  char dest;
+
+  line->byte_size = 2;
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else 
+      return OK;
+  }
+
+  switch(line->addr_mode) {
+  case ABSOLUTE:
+    if(operand - pc >= 128 || operand - pc < -128)
+      return branch_out_of_bounds(line);
+    dest = (char)(operand - pc);
+    line->bytes[0] = BNE;
+    line->bytes[1] = dest;
+    break;
+  default: return invalid_operand(line);
+  }
+
+  return OK;
+}
+
 Status clc(Line* line) {
   switch(line->addr_mode) {
   case IMPLIED:
@@ -147,6 +195,31 @@ Status inc(Line* line) {
     break;
   default:
     return invalid_operand(line);
+  }
+
+  return OK;
+}
+
+Status jsr(Line* line) {
+  int operand;
+
+  line->byte_size = 3;
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else 
+      return OK;
+  }
+
+  switch(line->addr_mode) {
+  case ABSOLUTE:
+    if(HI(operand) != HI(pc))
+      return jump_out_of_bounds(line);
+    line->bytes[0] = JSR_ABS;
+    line->bytes[1] = LO(operand);
+    line->bytes[2] = MID(operand);
+    break;
+  default: return invalid_operand(line);
   }
 
   return OK;

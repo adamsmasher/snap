@@ -6,8 +6,10 @@
 
 Status adc(Line* line);
 Status and(Line* line);
+Status bne(Line* line);
 Status clc(Line* line);
 Status inc(Line* line);
+Status jsr(Line* line);
 Status lda(Line* line);
 Status org(Line* line);
 Status stz(Line* line);
