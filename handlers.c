@@ -38,7 +38,15 @@
 #define LSR_ABS 0x4E
 #define LSR_DP 0x46
 
+#define PEA 0xF4
+
 #define PHA 0x48
+
+#define PLA 0x68
+
+#define PLD 0x2B
+
+#define RTL 0x6B
 
 #define STA_DP 0x85
 #define STA_ABS 0x8D
@@ -379,7 +387,33 @@ Status lsr(Line* line) {
   return OK;
 }
 
+Status pea(Line* line) {
+  int operand;
+
+  line->byte_size = 3;
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else
+      return OK;
+  }
+
+  switch(line->addr_mode) {
+  case ABSOLUTE:
+    line->bytes[0] = PEA;
+    line->bytes[1] = LO(operand);
+    line->bytes[2] = MID(operand);
+    break;
+  default: return invalid_operand(line);
+  }
+
+  return OK;
+}
+
 Status pha(Line* line) { return implicit(line, PHA); }
+Status pla(Line* line) { return implicit(line, PLA); }
+Status pld(Line* line) { return implicit(line, PLD); }
+Status rtl(Line* line) { return implicit(line, RTL); }
 
 Status sta(Line* line) {
   int operand;
