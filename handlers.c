@@ -30,6 +30,10 @@
 
 #define LDA_BASE 0xA0
 
+#define LSR_ACC 0x4A
+#define LSR_ABS 0x4E
+#define LSR_DP 0x46
+
 #define STA_DP 0x85
 #define STA_ABS 0x8D
 #define STA_ABS_LONG 0x8F
@@ -292,6 +296,44 @@ Status org(Line* line) {
       pc = operand;
     else
       return operand_too_large(operand);
+    break;
+  default:
+    return invalid_operand(line);
+  }
+
+  return OK;
+}
+
+Status lsr(Line* line) {
+  int operand;
+
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else {
+      line->byte_size = 3;
+      return OK;
+    }
+  }
+
+  switch(line->addr_mode) {
+  case ACCUMULATOR:
+    line->byte_size = 1;
+    line->bytes[0] = LSR_ACC;
+    break;
+  case ABSOLUTE:
+    if(operand <= 0xFF) {
+      line->byte_size = 2;
+      line->bytes[0] = LSR_DP;
+    }
+    else if(operand <= 0xFFFF) {
+      line->byte_size = 3;
+      line->bytes[0] = LSR_ABS;
+    }
+    else
+      return operand_too_large(operand);
+    line->bytes[1] = LO(operand);
+    line->bytes[2] = MID(operand);
     break;
   default:
     return invalid_operand(line);

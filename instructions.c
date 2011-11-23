@@ -30,6 +30,7 @@ void init_instructions() {
     {"inc", inc},
     {"jsr", jsr},
     {"lda", lda},
+    {"lsr", lsr},
     {"org", org},
     {"sta", sta},
     {"stz", stz},
