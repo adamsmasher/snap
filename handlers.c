@@ -13,6 +13,10 @@
 
 #define AND_BASE 0x20
 
+#define ASL_ACC 0x0A
+#define ASL_DP 0x06
+#define ASL_ABS 0x0E
+
 #define BNE 0xD0
 
 #define CLC 0x18
@@ -127,6 +131,44 @@ Status adc(Line* line) {
 
 Status and(Line* line) {
   return primary(line, AND_BASE, acc16);
+}
+
+Status asl(Line* line) {
+  int operand;
+
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else {
+      line->byte_size = 3;
+      return OK;
+    }
+  }
+
+  switch(line->addr_mode) {
+  case ACCUMULATOR:
+    line->byte_size = 1;
+    line->bytes[0] = ASL_ACC;
+    break;
+  case ABSOLUTE:
+    if(operand <= 0xFF) {
+      line->byte_size = 2;
+      line->bytes[0] = ASL_DP;
+    }
+    else if(operand <= 0xFFFF) {
+      line->byte_size = 3;
+      line->bytes[0] = ASL_ABS;
+    }
+    else
+      return operand_too_large(operand);
+    line->bytes[1] = LO(operand);
+    line->bytes[2] = MID(operand);
+    break;
+  default:
+    return invalid_operand(line);
+  }
+
+  return OK;
 }
 
 Status bne(Line* line) {
