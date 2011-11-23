@@ -17,6 +17,8 @@
 #define ASL_DP 0x06
 #define ASL_ABS 0x0E
 
+#define BEQ 0xF0
+
 #define BNE 0xD0
 
 #define CLC 0x18
@@ -42,6 +44,8 @@
 
 #define STZ_ABS 0x9C
 #define STZ_DP 0x64
+
+#define TAS 0x1B
 
 #define TAX 0xAA
 
@@ -131,6 +135,19 @@ static Status primary(Line* line, int base, int sixteen_bit) {
   return OK;
 }
 
+static Status implicit(Line* line, int op) {
+  switch(line->addr_mode) {
+  case IMPLIED:
+    line->byte_size = 1;
+    line->bytes[0] = op;
+    break;
+  default:
+    return invalid_operand(line);
+  }
+
+  return OK;
+}
+
 Status adc(Line* line) {
   return primary(line, ADC_BASE, acc16);
 }
@@ -177,6 +194,32 @@ Status asl(Line* line) {
   return OK;
 }
 
+Status beq(Line* line) {
+  int operand;
+  char dest;
+
+  line->byte_size = 2;
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else 
+      return OK;
+  }
+
+  switch(line->addr_mode) {
+  case ABSOLUTE:
+    if(operand - pc >= 128 || operand - pc < -128)
+      return branch_out_of_bounds(line);
+    dest = (char)(operand - pc);
+    line->bytes[0] = BEQ;
+    line->bytes[1] = dest;
+    break;
+  default: return invalid_operand(line);
+  }
+
+  return OK;
+}
+
 Status bne(Line* line) {
   int operand;
   char dest;
@@ -203,32 +246,8 @@ Status bne(Line* line) {
   return OK;
 }
 
-Status clc(Line* line) {
-  switch(line->addr_mode) {
-  case IMPLIED:
-    line->byte_size = 1;
-    line->bytes[0] = CLC;
-    break;
-  default:
-    return invalid_operand(line);
-  }
-
-  return OK;
-}
-
-Status dex(Line* line) {
-  switch(line->addr_mode) {
-  case IMPLIED:
-    line->byte_size = 1;
-    line->bytes[0] = DEX;
-    break;
-  default:
-    return invalid_operand(line);
-  }
-
-  return OK;
-}
-
+Status clc(Line* line) { return implicit(line, CLC); }
+Status dex(Line* line) { return implicit(line, DEX); }
 
 Status inc(Line* line) {
   int operand;
@@ -436,29 +455,7 @@ Status stz(Line* line) {
   return OK;
 }
 
-Status tax(Line* line) {
-  switch(line->addr_mode) {
-  case IMPLIED:
-    line->byte_size = 1;
-    line->bytes[0] = TAX;
-    break;
-  default:
-    return invalid_operand(line);
-  }
-
-  return OK;
-}
-
-Status xce(Line* line) {
-  switch(line->addr_mode) {
-  case IMPLIED:
-    line->byte_size = 1;
-    line->bytes[0] = XCE;
-    break;
-  default:
-    return invalid_operand(line);
-  }
-
-  return OK;
-}
+Status tas(Line* line) { return implicit(line, TAS); }
+Status tax(Line* line) { return implicit(line, TAX); }
+Status xce(Line* line) { return implicit(line, XCE); }
 
