@@ -26,6 +26,10 @@
 
 #define LDA_BASE 0xA0
 
+#define STA_DP 0x85
+#define STA_ABS 0x8D
+#define STA_ABS_LONG 0x8F
+
 #define STZ_ABS 0x9C
 #define STZ_DP 0x64
 
@@ -244,6 +248,50 @@ Status org(Line* line) {
       pc = operand;
     else
       return operand_too_large(operand);
+    break;
+  default:
+    return invalid_operand(line);
+  }
+
+  return OK;
+}
+
+Status sta(Line* line) {
+  int operand;
+
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else {
+      /* set byte_size, assuming the worst */
+      switch(line->addr_mode) {
+      case ABSOLUTE:
+        line->byte_size = 4;
+        return OK;
+      default: return invalid_operand(line);
+      }
+    }
+  }
+
+  switch(line->addr_mode) {
+  case ABSOLUTE:
+    if(operand <= 0xFF) {
+      line->byte_size = 2;
+      line->bytes[0] = STA_DP;
+    }
+    else if(operand <= 0xFFFF) {
+      line->byte_size = 3;
+      line->bytes[0] = STA_ABS;
+    }
+    else if(operand <= 0xFFFFFF) {
+      line->byte_size = 4;
+      line->bytes[0] = STA_ABS_LONG;
+    }
+    else
+      return operand_too_large(operand);
+    line->bytes[1] = LO(operand);
+    line->bytes[2] = MID(operand);
+    line->bytes[3] = HI(operand);
     break;
   default:
     return invalid_operand(line);

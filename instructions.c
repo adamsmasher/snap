@@ -30,6 +30,7 @@ void init_instructions() {
     {"jsr", jsr},
     {"lda", lda},
     {"org", org},
+    {"sta", sta},
     {"stz", stz},
     {"xce", xce}
   };
