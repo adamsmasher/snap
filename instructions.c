@@ -26,6 +26,7 @@ void init_instructions() {
     {"and", and},
     {"asl", asl},
     {"beq", beq},
+    {"bit", bit},
     {"bne", bne},
     {"clc", clc},
     {"dex", dex},
@@ -35,6 +36,7 @@ void init_instructions() {
     {"jsr", jsr},
     {"lda", lda},
     {"ldx", ldx},
+    {"longa", longa},
     {"lsr", lsr},
     {"org", org},
     {"pea", pea},
@@ -49,6 +51,7 @@ void init_instructions() {
     {"tcs", tas},
     {"tsa", tsa},
     {"tsc", tsa},
+    {"txa", txa},
     {"xce", xce}
   };
 

@@ -4,6 +4,8 @@
 #include "lines.h"
 #include "snap.h"
 
+#include <strings.h>
+
 #define PRIMARY_IMM 0x09
 #define PRIMARY_DP 0x05
 #define PRIMARY_ABS 0x0D
@@ -18,6 +20,10 @@
 #define ASL_ABS 0x0E
 
 #define BEQ 0xF0
+
+#define BIT_IMM 0x89
+#define BIT_DP 0x24
+#define BIT_ABS 0x2C
 
 #define BNE 0xD0
 
@@ -70,6 +76,8 @@
 
 #define TSA 0x3B
 
+#define TXA 0x8A
+
 #define XCE 0xFB
 
 #define LO(x) ((char)(x))
@@ -111,7 +119,7 @@ static Status primary(Line* line, int base, int sixteen_bit) {
       /* set byte_size, assuming the worst */
       switch(line->addr_mode) {
       case IMMEDIATE:
-        line->byte_size = 3;
+        line->byte_size = sixteen_bit ? 3 : 2;
         return OK;
       case ABSOLUTE:
         line->byte_size = 4;
@@ -240,6 +248,55 @@ Status beq(Line* line) {
 
   return OK;
 }
+
+Status bit(Line* line) {
+  int operand;
+
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else {
+      switch(line->addr_mode) {
+      case IMMEDIATE: 
+        line->byte_size = acc16 ? 3 : 2;
+        break;
+      case ABSOLUTE:
+        line->byte_size = 3;
+        break;
+      default: return invalid_operand(line);
+      }
+      return OK;
+    }
+  }
+
+  switch(line->addr_mode) {
+  case IMMEDIATE:
+    line->byte_size = acc16 ? 3 : 2;
+    line->bytes[0] = BIT_IMM;
+    line->bytes[1] = LO(operand);
+    line->bytes[2] = MID(operand);
+    break;
+  case ABSOLUTE:
+    if(operand <= 0xFF) {
+      line->byte_size = 2;
+      line->bytes[0] = BIT_DP;
+    }
+    else if(operand <= 0xFFFF) {
+      line->byte_size = 3;
+      line->bytes[0] = BIT_ABS;
+    }
+    else
+      return operand_too_large(operand);
+    line->bytes[1] = LO(operand);
+    line->bytes[2] = MID(operand);
+    break;
+  default:
+    return invalid_operand(line);
+  }
+
+  return OK;
+}
+
 
 Status bne(Line* line) {
   int operand;
@@ -414,6 +471,20 @@ Status ldx(Line* line) {
   return OK;
 }
 
+Status longa(Line* line) {
+  if(line->addr_mode != ABSOLUTE && line->expr1->type != SYMBOL)
+    return invalid_operand(line);
+
+  if(strcasecmp(line->expr1->e.sym, "on") == 0)
+    acc16 = 1;
+  else if(strcasecmp(line->expr1->e.sym, "off") == 0)
+    acc16 = 0;
+  else
+    return invalid_operand(line);
+
+  return OK;
+}
+
 Status lsr(Line* line) {
   int operand;
 
@@ -584,5 +655,6 @@ Status stz(Line* line) {
 Status tas(Line* line) { return implicit(line, TAS); }
 Status tax(Line* line) { return implicit(line, TAX); }
 Status tsa(Line* line) { return implicit(line, TSA); }
+Status txa(Line* line) { return implicit(line, TXA); }
 Status xce(Line* line) { return implicit(line, XCE); }
 
