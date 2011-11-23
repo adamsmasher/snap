@@ -10,7 +10,7 @@ Line* alloc_line() {
   if(l) {
     l->label = NULL;
     l->instruction = NULL;
-    l->byte_size = -1;
+    l->byte_size = 0;
     l->expr1 = NULL;
     l->expr2 = NULL;
   }
