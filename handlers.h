@@ -14,6 +14,7 @@ Status lda(Line* line);
 Status org(Line* line);
 Status sta(Line* line);
 Status stz(Line* line);
+Status tax(Line* line);
 Status xce(Line* line);
 
 #endif

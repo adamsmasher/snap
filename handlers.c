@@ -33,6 +33,8 @@
 #define STZ_ABS 0x9C
 #define STZ_DP 0x64
 
+#define TAX 0xAA
+
 #define XCE 0xFB
 
 #define LO(x) ((char)(x))
@@ -334,6 +336,18 @@ Status stz(Line* line) {
   return OK;
 }
 
+Status tax(Line* line) {
+  switch(line->addr_mode) {
+  case IMPLIED:
+    line->byte_size = 1;
+    line->bytes[0] = TAX;
+    break;
+  default:
+    return invalid_operand(line);
+  }
+
+  return OK;
+}
 
 Status xce(Line* line) {
   switch(line->addr_mode) {

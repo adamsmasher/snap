@@ -32,6 +32,7 @@ void init_instructions() {
     {"org", org},
     {"sta", sta},
     {"stz", stz},
+    {"tax", tax},
     {"xce", xce}
   };
 
