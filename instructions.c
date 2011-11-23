@@ -45,6 +45,7 @@ void init_instructions() {
     {"pld", pld},
     {"ply", ply},
     {"rtl", rtl},
+    {"rts", rts},
     {"sbc", sbc},
     {"sec", sec},
     {"sta", sta},

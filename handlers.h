@@ -27,6 +27,7 @@ Status pla(Line* line);
 Status pld(Line* line);
 Status ply(Line* line);
 Status rtl(Line* line);
+Status rts(Line* line);
 Status sbc(Line* line);
 Status sec(Line* line);
 Status sta(Line* line);

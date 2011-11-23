@@ -65,6 +65,8 @@
 
 #define RTL 0x6B
 
+#define RTS 0x60
+
 #define SBC_BASE 0xE0
 
 #define SEC 0x38
@@ -580,6 +582,7 @@ Status pla(Line* line) { return implicit(line, PLA); }
 Status pld(Line* line) { return implicit(line, PLD); }
 Status ply(Line* line) { return implicit(line, PLY); }
 Status rtl(Line* line) { return implicit(line, RTL); }
+Status rts(Line* line) { return implicit(line, RTS); }
 Status sbc(Line* line) { return primary(line, SBC_BASE, acc16); }
 Status sec(Line* line) { return implicit(line, SEC); }
 
