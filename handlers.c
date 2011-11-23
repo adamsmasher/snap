@@ -29,6 +29,8 @@
 #define INC_DP 0xE6
 #define INC_ABS 0xEE
 
+#define INX 0xE8
+
 #define JMP_ABS                  0x4C
 #define JMP_ABS_INDEXED_INDIRECT 0x7C
 
@@ -305,6 +307,8 @@ Status inc(Line* line) {
 
   return OK;
 }
+
+Status inx(Line* line) { return implicit(line, INX); }
 
 Status jmp(Line* line) {
   int operand;

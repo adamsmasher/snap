@@ -30,6 +30,7 @@ void init_instructions() {
     {"clc", clc},
     {"dex", dex},
     {"inc", inc},
+    {"inx", inx},
     {"jmp", jmp},
     {"jsr", jsr},
     {"lda", lda},
