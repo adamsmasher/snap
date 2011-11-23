@@ -21,6 +21,8 @@
 
 #define CLC 0x18
 
+#define DEX 0xCA
+
 #define INC_ACC 0x1A
 #define INC_DP 0xE6
 #define INC_ABS 0xEE
@@ -213,6 +215,20 @@ Status clc(Line* line) {
 
   return OK;
 }
+
+Status dex(Line* line) {
+  switch(line->addr_mode) {
+  case IMPLIED:
+    line->byte_size = 1;
+    line->bytes[0] = DEX;
+    break;
+  default:
+    return invalid_operand(line);
+  }
+
+  return OK;
+}
+
 
 Status inc(Line* line) {
   int operand;

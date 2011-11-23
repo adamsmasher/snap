@@ -27,6 +27,7 @@ void init_instructions() {
     {"asl", asl},
     {"bne", bne},
     {"clc", clc},
+    {"dex", dex},
     {"inc", inc},
     {"jsr", jsr},
     {"lda", lda},

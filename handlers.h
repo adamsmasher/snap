@@ -9,6 +9,7 @@ Status and(Line* line);
 Status asl(Line* line);
 Status bne(Line* line);
 Status clc(Line* line);
+Status dex(Line* line);
 Status inc(Line* line);
 Status jsr(Line* line);
 Status lda(Line* line);
