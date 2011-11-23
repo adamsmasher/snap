@@ -16,6 +16,7 @@ Status jsr(Line* line);
 Status lda(Line* line);
 Status lsr(Line* line);
 Status org(Line* line);
+Status pha(Line* line);
 Status sta(Line* line);
 Status stz(Line* line);
 Status tas(Line* line);

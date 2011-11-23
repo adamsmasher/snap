@@ -38,6 +38,8 @@
 #define LSR_ABS 0x4E
 #define LSR_DP 0x46
 
+#define PHA 0x48
+
 #define STA_DP 0x85
 #define STA_ABS 0x8D
 #define STA_ABS_LONG 0x8F
@@ -376,6 +378,8 @@ Status lsr(Line* line) {
 
   return OK;
 }
+
+Status pha(Line* line) { return implicit(line, PHA); }
 
 Status sta(Line* line) {
   int operand;

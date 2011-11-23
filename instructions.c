@@ -34,6 +34,7 @@ void init_instructions() {
     {"lda", lda},
     {"lsr", lsr},
     {"org", org},
+    {"pha", pha},
     {"sta", sta},
     {"stz", stz},
     {"tas", tas},
