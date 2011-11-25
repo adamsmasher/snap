@@ -38,6 +38,7 @@ void init_instructions() {
     {"lda", lda},
     {"ldx", ldx},
     {"longa", longa},
+    {"longi", longi},
     {"lsr", lsr},
     {"org", org},
     {"pea", pea},

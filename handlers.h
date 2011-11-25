@@ -20,6 +20,7 @@ Status jsr(Line* line);
 Status lda(Line* line);
 Status ldx(Line* line);
 Status longa(Line* line);
+Status longi(Line* line);
 Status lsr(Line* line);
 Status org(Line* line);
 Status pea(Line* line);

@@ -519,6 +519,21 @@ Status longa(Line* line) {
   return OK;
 }
 
+Status longi(Line* line) {
+  if(line->addr_mode != ABSOLUTE && line->expr1->type != SYMBOL)
+    return invalid_operand(line);
+
+  if(strcasecmp(line->expr1->e.sym, "on") == 0)
+    index16 = 1;
+  else if(strcasecmp(line->expr1->e.sym, "off") == 0)
+    index16 = 0;
+  else
+    return invalid_operand(line);
+
+  return OK;
+}
+
+
 Status lsr(Line* line) {
   int operand;
 
