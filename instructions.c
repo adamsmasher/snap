@@ -30,6 +30,7 @@ void init_instructions() {
     {"bne", bne},
     {"clc", clc},
     {"dex", dex},
+    {"equ", equ},
     {"inc", inc},
     {"inx", inx},
     {"jmp", jmp},

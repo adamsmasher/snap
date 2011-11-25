@@ -1,6 +1,7 @@
 #include "handlers.h"
 
 #include "expr.h"
+#include "labels.h"
 #include "lines.h"
 #include "snap.h"
 
@@ -336,6 +337,27 @@ Status bne(Line* line) {
 
 Status clc(Line* line) { return implicit(line, CLC); }
 Status dex(Line* line) { return implicit(line, DEX); }
+
+Status equ(Line* line) {
+  int operand;
+
+  line->byte_size = 0;
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else
+      return OK;
+  }
+
+  if(line->addr_mode == ABSOLUTE) {
+    if(!line->label)
+      return error("Must specify label for EQU");
+    else
+      return set_val(line->label, operand);
+  }
+  else
+    return invalid_operand(line);
+}
 
 Status inc(Line* line) {
   int operand;

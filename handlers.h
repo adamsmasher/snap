@@ -12,6 +12,7 @@ Status bit(Line* line);
 Status bne(Line* line);
 Status clc(Line* line);
 Status dex(Line* line);
+Status equ(Line* line);
 Status inc(Line* line);
 Status inx(Line* line);
 Status jmp(Line* line);

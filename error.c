@@ -23,3 +23,7 @@ Status expected(char e, char c) {
   return error("expected '%c', instead found '%c'", e, c);
 }
 
+Status redefined_label(char* l) {
+  return error("redefinition of label %s", l);
+}
+

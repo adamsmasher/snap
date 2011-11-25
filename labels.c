@@ -1,6 +1,7 @@
 #include "labels.h"
 
 #include "error.h"
+#include "snap.h"
 #include "table.h"
 
 #include <string.h>
@@ -26,6 +27,19 @@ Status sym_val(char* sym, int* dest) {
     return OK;
   }
   else return ERROR;
+}
+
+Status set_val(char* sym, int val) {
+  int i = lookup_symbol(sym);
+
+  if(symbol_table[i].name && symbol_table[i].defined == pass + 1)
+    return redefined_label(sym);
+  else {
+    intern_symbol(sym);
+    symbol_table[i].defined = pass + 1;
+    symbol_table[i].val = val;
+    return OK;
+  }
 }
 
 void init_symtable() {
