@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <strings.h>
 
 int usage() {
   fprintf(stderr, "Usage: snap <in-file> <out-file>\n");
@@ -73,6 +74,13 @@ Status assemble() {
     missing_labels = 0;
     while(lp) {
       line_num = lp->line_num;
+      /* add the label */
+      if(lp->label) {
+        /* special case for constants */
+        if(!lp->instruction || strcasecmp(lp->instruction, "equ") != 0)
+          if(set_val(lp->label, pc) != OK)
+            return ERROR;
+      }
       /* assemble the instruction */
       if(lp->instruction) {
         /* lookup the handler for the instruction */
