@@ -64,6 +64,8 @@
 
 #define PLY 0x7A
 
+#define REP 0xC2
+
 #define RTL 0x6B
 
 #define RTS 0x60
@@ -71,6 +73,8 @@
 #define SBC_BASE 0xE0
 
 #define SEC 0x38
+
+#define SEP 0xE2
 
 #define STA_DP 0x85
 #define STA_ABS 0x8D
@@ -623,10 +627,59 @@ Status pha(Line* line) { return implicit(line, PHA); }
 Status pla(Line* line) { return implicit(line, PLA); }
 Status pld(Line* line) { return implicit(line, PLD); }
 Status ply(Line* line) { return implicit(line, PLY); }
+
+Status rep(Line* line) {
+  int operand;
+
+  line->byte_size = 2;
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else
+      return OK;
+  }
+
+  switch(line->addr_mode) {
+  case IMMEDIATE:
+    if(operand > 0xFF)
+      return operand_too_large(operand);
+    line->bytes[0] = REP;
+    line->bytes[1] = LO(operand);
+    break;
+  default: return invalid_operand(line);
+  }
+
+  return OK;
+}
+
 Status rtl(Line* line) { return implicit(line, RTL); }
 Status rts(Line* line) { return implicit(line, RTS); }
 Status sbc(Line* line) { return primary(line, SBC_BASE, acc16); }
 Status sec(Line* line) { return implicit(line, SEC); }
+
+Status sep(Line* line) {
+  int operand;
+
+  line->byte_size = 2;
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else
+      return OK;
+  }
+
+  switch(line->addr_mode) {
+  case IMMEDIATE:
+    if(operand > 0xFF)
+      return operand_too_large(operand);
+    line->bytes[0] = SEP;
+    line->bytes[1] = LO(operand);
+    break;
+  default: return invalid_operand(line);
+  }
+
+  return OK;
+}
 
 Status sta(Line* line) {
   int operand;
