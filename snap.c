@@ -18,6 +18,7 @@ int usage() {
 int acc16 = 0;
 int index16 = 0;
 int line_num = 0;
+int missing_labels = 0;
 int pass = 0;
 int pc = 0;
 
@@ -65,21 +66,26 @@ int main(int argc, char** argv) {
 
 Status assemble() {
   Handler f;
-  Line* lp = first_line;
+  Line* lp;
 
-  while(lp) {
-    line_num = lp->line_num;
-    /* assemble the instruction */
-    if(lp->instruction) {
-      /* lookup the handler for the instruction */
-      if(!(f = get_handler(lp->instruction)))
-        return error("unknown instruction '%s'", lp->instruction);
-      if(f(lp) != OK)
-        return ERROR; 
-      pc += lp->byte_size;
+  do {
+    lp = first_line;
+    missing_labels = 0;
+    while(lp) {
+      line_num = lp->line_num;
+      /* assemble the instruction */
+      if(lp->instruction) {
+        /* lookup the handler for the instruction */
+        if(!(f = get_handler(lp->instruction)))
+          return error("unknown instruction '%s'", lp->instruction);
+        if(f(lp) != OK)
+          return ERROR; 
+        pc += lp->byte_size;
+      }
+      lp = lp->next;
     }
-    lp = lp->next;
-  }
+    pass++;
+  } while(missing_labels);
   return OK;
 }
 

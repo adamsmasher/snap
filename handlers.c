@@ -239,8 +239,9 @@ Status beq(Line* line) {
   if(eval(line->expr1, &operand) != OK) {
     if(pass)
       return ERROR;
-    else 
+    else {
       return OK;
+    }
   }
 
   switch(line->addr_mode) {
@@ -314,8 +315,9 @@ Status bne(Line* line) {
   if(eval(line->expr1, &operand) != OK) {
     if(pass)
       return ERROR;
-    else 
+    else { 
       return OK;
+    }
   }
 
   switch(line->addr_mode) {
@@ -382,8 +384,9 @@ Status jmp(Line* line) {
   if(eval(line->expr1, &operand) != OK) {
     if(pass)
       return ERROR;
-    else 
+    else {
       return OK;
+    }
   }
 
   switch(line->addr_mode) {
@@ -408,8 +411,9 @@ Status jsr(Line* line) {
   if(eval(line->expr1, &operand) != OK) {
     if(pass)
       return ERROR;
-    else 
+    else {
       return OK;
+    }
   }
 
   switch(line->addr_mode) {
@@ -561,8 +565,9 @@ Status pea(Line* line) {
   if(eval(line->expr1, &operand) != OK) {
     if(pass)
       return ERROR;
-    else
+    else {
       return OK;
+    }
   }
 
   switch(line->addr_mode) {
@@ -593,7 +598,6 @@ Status sta(Line* line) {
     if(pass)
       return ERROR;
     else {
-      /* set byte_size, assuming the worst */
       switch(line->addr_mode) {
       case ABSOLUTE:
         line->byte_size = 4;
