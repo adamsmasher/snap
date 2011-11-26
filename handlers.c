@@ -11,6 +11,8 @@
 #define PRIMARY_DP 0x05
 #define PRIMARY_ABS 0x0D
 #define PRIMARY_ABS_LONG 0x0F
+#define PRIMARY_ABS_INDEXED_X 0x1D
+#define PRIMARY_ABS_LONG_INDEXED_X 0x1F
 
 #define ADC_BASE 0x60
 
@@ -137,6 +139,9 @@ static Status primary(Line* line, int base, int sixteen_bit) {
       case ABSOLUTE:
         line->byte_size = 4;
         return OK;
+      case ABSOLUTE_INDEXED_X:
+        line->byte_size = 4;
+        return OK;
       default: return invalid_operand(line);
       }
     }
@@ -163,6 +168,21 @@ static Status primary(Line* line, int base, int sixteen_bit) {
     else if(operand <= 0xFFFFFF) {
       line->byte_size = 4;
       line->bytes[0] = base + PRIMARY_ABS_LONG;
+    }
+    else
+      return operand_too_large(operand);
+    line->bytes[1] = LO(operand);
+    line->bytes[2] = MID(operand);
+    line->bytes[3] = HI(operand);
+    break;
+  case ABSOLUTE_INDEXED_X:
+    if(operand <= 0xFFFF) {
+      line->byte_size = 3;
+      line->bytes[0] = base + PRIMARY_ABS_INDEXED_X;
+    }
+    else if(operand <= 0xFFFFFF) {
+      line->byte_size = 4;
+      line->bytes[0] = base + PRIMARY_ABS_LONG_INDEXED_X;
     }
     else
       return operand_too_large(operand);
