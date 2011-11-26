@@ -68,32 +68,44 @@ int main(int argc, char** argv) {
 Status assemble() {
   Handler f;
   Line* lp;
+  int old_byte_size;
+  int another_pass;
 
+  /* continue doing passes until we can't make any more optimizations */
   do {
-    lp = first_line;
-    missing_labels = 0;
-    while(lp) {
-      line_num = lp->line_num;
-      /* add the label */
-      if(lp->label) {
-        /* special case for constants */
-        if(!lp->instruction || strcasecmp(lp->instruction, "equ") != 0)
-          if(set_val(lp->label, pc) != OK)
-            return ERROR;
+    another_pass = 0;
+    /* continue doing passes as long as we're missing labels */
+    do {
+      lp = first_line;
+      missing_labels = 0;
+      while(lp) {
+        line_num = lp->line_num;
+        old_byte_size = lp->byte_size;
+        /* add the label */
+        if(lp->label) {
+          /* special case for constants */
+          if(!lp->instruction || strcasecmp(lp->instruction, "equ") != 0)
+            if(set_val(lp->label, pc) != OK)
+              return ERROR;
+        }
+        /* assemble the instruction */
+        if(lp->instruction) {
+          /* lookup the handler for the instruction */
+          if(!(f = get_handler(lp->instruction)))
+            return error("unknown instruction '%s'", lp->instruction);
+          if(f(lp) != OK)
+            return ERROR; 
+          pc += lp->byte_size;
+          if(old_byte_size > lp->byte_size) {
+            printf("debug: line %d was %db, now %db.\n", line_num, old_byte_size, lp->byte_size);
+            another_pass = 1;
+          }
+        }
+        lp = lp->next;
       }
-      /* assemble the instruction */
-      if(lp->instruction) {
-        /* lookup the handler for the instruction */
-        if(!(f = get_handler(lp->instruction)))
-          return error("unknown instruction '%s'", lp->instruction);
-        if(f(lp) != OK)
-          return ERROR; 
-        pc += lp->byte_size;
-      }
-      lp = lp->next;
-    }
-    pass++;
-  } while(missing_labels);
+      pass++;
+    } while(missing_labels);
+  } while(another_pass);
   return OK;
 }
 
