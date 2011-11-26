@@ -13,6 +13,7 @@
 #define PRIMARY_ABS_LONG 0x0F
 #define PRIMARY_ABS_INDEXED_X 0x1D
 #define PRIMARY_ABS_LONG_INDEXED_X 0x1F
+#define PRIMARY_DP_INDEXED_X 0x15
 
 #define ADC_BASE 0x60
 
@@ -83,6 +84,7 @@
 #define STA_ABS_LONG 0x8F
 #define STA_ABS_INDEXED_X 0x9D
 #define STA_ABS_LONG_INDEXED_X 0x9F
+#define STA_INDEXED_INDIRECT_X 0x81
 
 #define STZ_ABS 0x9C
 #define STZ_DP 0x64
@@ -176,7 +178,11 @@ static Status primary(Line* line, int base, int sixteen_bit) {
     line->bytes[3] = HI(operand);
     break;
   case ABSOLUTE_INDEXED_X:
-    if(operand <= 0xFFFF) {
+    if(operand <= 0xFF) {
+      line->byte_size = 2;
+      line->bytes[0] = base + PRIMARY_DP_INDEXED_X;
+    }
+    else if(operand <= 0xFFFF) {
       line->byte_size = 3;
       line->bytes[0] = base + PRIMARY_ABS_INDEXED_X;
     }
@@ -709,6 +715,9 @@ Status sta(Line* line) {
       return ERROR;
     else {
       switch(line->addr_mode) {
+      case INDEXED_INDIRECT_X:
+        line->byte_size = 2;
+        return OK;
       case ABSOLUTE:
       case ABSOLUTE_INDEXED_X:
         line->byte_size = 4;
@@ -753,7 +762,14 @@ Status sta(Line* line) {
     line->bytes[2] = MID(operand);
     line->bytes[3] = HI(operand);
     break;
-   default:
+  case INDEXED_INDIRECT_X:
+    if(operand > 0xFF)
+      return operand_too_large(operand);
+    line->byte_size = 2;
+    line->bytes[0] = STA_INDEXED_INDIRECT_X;
+    line->bytes[1] = LO(operand); 
+    break;
+  default:
     return invalid_operand(line);
   }
 
