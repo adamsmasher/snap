@@ -35,6 +35,7 @@ Status sbc(Line* line);
 Status sec(Line* line);
 Status sep(Line* line);
 Status sta(Line* line);
+Status sty(Line* line);
 Status stz(Line* line);
 Status tas(Line* line);
 Status tax(Line* line);

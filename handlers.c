@@ -86,6 +86,10 @@
 #define STA_ABS_LONG_INDEXED_X 0x9F
 #define STA_INDEXED_INDIRECT_X 0x81
 
+#define STY_ABS 0x8C
+#define STY_DP 0x84
+#define STY_DP_INDEXED_X 0x94
+
 #define STZ_ABS 0x9C
 #define STZ_DP 0x64
 
@@ -771,6 +775,50 @@ Status sta(Line* line) {
     break;
   default:
     return invalid_operand(line);
+  }
+
+  return OK;
+}
+
+Status sty(Line* line) {
+  int operand;
+
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else
+      switch(line->addr_mode) {
+      case ABSOLUTE:
+        line->byte_size = 3;
+        return OK;
+      case ABSOLUTE_INDEXED_X:
+        line->byte_size = 2;
+        return OK;
+      default: return invalid_operand(line);
+      }
+  }
+
+  switch(line->addr_mode) {
+  case ABSOLUTE:
+    if(operand <= 0xFF) {
+      line->byte_size = 2;
+      line->bytes[0] = STY_DP;
+    }
+    else if(operand <= 0xFFFF) {
+      line->byte_size = 3;
+      line->bytes[0] = STY_ABS;
+    }
+    else return operand_too_large(operand);
+    line->bytes[1] = LO(operand);
+    line->bytes[2] = MID(operand);
+    break;
+  case ABSOLUTE_INDEXED_X:
+    if(operand > 0xFF) return operand_too_large(operand);
+    line->byte_size = 2;
+    line->bytes[0] = STY_DP_INDEXED_X;
+    line->bytes[1] = LO(operand);
+    break;
+  default: return invalid_operand(line);
   }
 
   return OK;

@@ -53,6 +53,7 @@ void init_instructions() {
     {"sec", sec},
     {"sep", sep},
     {"sta", sta},
+    {"sty", sty},
     {"stz", stz},
     {"tas", tas},
     {"tax", tax},
