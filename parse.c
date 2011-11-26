@@ -194,6 +194,7 @@ static Status get_operand(char* lp, Line* line) {
     indexed indirect x:  lda ( $01 ,  X )
     SR indirect indexed: lda ( $01 , S ) , Y */
   else if(*lp == '(') {
+    lp++;
     /* skip whitespace after the paren */
     while(*lp && isspace(*lp)) lp++;
     
@@ -316,7 +317,7 @@ static Status get_operand(char* lp, Line* line) {
     else if(*lp == ',') {
       /* move past comma */
       lp++;
-      while(*lp && isspace(*lp));
+      while(*lp && isspace(*lp)) lp++;
     
       switch(tolower(*lp)) {
       case 'x': line->addr_mode = ABSOLUTE_INDEXED_X; lp++; break;
@@ -378,13 +379,31 @@ static Status read_expr(char** lp, Expr* expr) {
     }
   }
   else {
-    return read_sym(lp, &expr->e.sym);
+    char* l;
+    if(read_sym(lp, &l) != OK)
+      return ERROR;
+    while(**lp && isspace(**lp)) (*lp)++;
+    if(**lp == '-') {
+      expr->type = SUB;
+      expr->e.subexpr[0] = malloc(sizeof(Expr));
+      expr->e.subexpr[1] = malloc(sizeof(Expr));
+      expr->e.subexpr[0]->type = SYMBOL;
+      expr->e.subexpr[0]->e.sym = l;
+      (*lp)++;
+      while(**lp && isspace(**lp)) (*lp)++;
+      return read_expr(lp, expr->e.subexpr[1]);
+    }
+    else {
+      expr->type = SYMBOL;
+      expr->e.sym = l;
+      return OK;
+    }
   }
 }
 
 static Status read_dec(char** lp, int* n) {
   *n = 0;
-  while(**lp && !isspace(**lp)) {
+  while(**lp && !isspace(**lp) && **lp != ',') {
     if(!isdigit(**lp))
       return error("unexpected '%c' in numerical constant", **lp);
     *n = *n * 10 + (**lp - '0');
