@@ -341,27 +341,49 @@ static Status get_operand(char* lp, Line* line) {
 }  
 
 static Status read_expr(char** lp, Expr* expr) {
-  if(isdigit(**lp)) {
-    expr->type = NUMBER;
-    return read_dec(lp, &expr->e.num);
-  }
-  else if(**lp == '%') {
-    expr->type = NUMBER;
-    (*lp)++;
-    return read_bin(lp, &expr->e.num);
-  }
-  else if(**lp == '$') {
-    expr->type = NUMBER;
-    (*lp)++;
-    return read_hex(lp, &expr->e.num);
+  if(isdigit(**lp) || **lp == '%' || **lp == '$') {
+    int l;
+    if(isdigit(**lp)) {
+      if(read_dec(lp, &l) != OK)
+         return ERROR;
+    }
+    else if(**lp == '%') {
+      (*lp)++;
+      if(read_bin(lp, &l) != OK)
+        return ERROR;
+    }
+    else if(**lp == '$') {
+      (*lp)++;
+      if(read_hex(lp, &l) != OK)
+        return ERROR;
+    }
+
+    /* skip whitespace */
+    while(**lp && isspace(**lp)) (*lp)++;
+
+    if(**lp == '-') {
+      expr->type = SUB;
+      expr->e.subexpr[0] = malloc(sizeof(Expr));
+      expr->e.subexpr[1] = malloc(sizeof(Expr));
+      expr->e.subexpr[0]->type = NUMBER;
+      expr->e.subexpr[0]->e.num = l;
+      (*lp)++;
+      while(**lp && isspace(**lp)) (*lp)++;
+      return read_expr(lp, expr->e.subexpr[1]);
+    }
+    else {
+      expr->type = NUMBER;
+      expr->e.num = l;
+      return OK;
+    }
   }
   else {
-    expr->type = SYMBOL;
     return read_sym(lp, &expr->e.sym);
   }
 }
 
 static Status read_dec(char** lp, int* n) {
+  *n = 0;
   while(**lp && !isspace(**lp)) {
     if(!isdigit(**lp))
       return error("unexpected '%c' in numerical constant", **lp);
@@ -372,6 +394,7 @@ static Status read_dec(char** lp, int* n) {
 }
 
 static Status read_hex(char** lp, int* n) {
+  *n = 0;
   while(**lp && !isspace(**lp)) {
     if(!isxdigit(**lp))
       return error("unexpected '%c' in numerical constant", **lp);
@@ -385,6 +408,7 @@ static Status read_hex(char** lp, int* n) {
 }
 
 static Status read_bin(char** lp, int* n) {
+  *n = 0;
   while(**lp && !isspace(**lp)) {
     if(**lp != '0' && **lp != '1')
       return error("unexpected '%c' in numerical constant", **lp);

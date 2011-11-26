@@ -4,6 +4,9 @@
 #include "snap.h"
 
 Status eval(Expr* e, int* result) {
+  int l;
+  int r;
+
   if(!e)
     return OK;
 
@@ -19,6 +22,13 @@ Status eval(Expr* e, int* result) {
       else
           return ERROR;
     }
+    return OK;
+  case SUB:
+    if(eval(e->e.subexpr[0], &l) != OK)
+      return ERROR;
+    if(eval(e->e.subexpr[1], &r) != OK)
+      return ERROR;
+    *result = l - r; 
     return OK;
   default: return ERROR;
   }

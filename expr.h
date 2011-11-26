@@ -3,13 +3,14 @@
 
 #include "error.h"
 
-typedef enum {SYMBOL, NUMBER} Expr_type;
+typedef enum {SYMBOL, NUMBER, SUB} Expr_type;
 
-typedef struct {
+typedef struct Expr_t {
   Expr_type type;
   union {
     int num;
     char* sym;
+    struct Expr_t* subexpr[2];
   } e;
 } Expr;
 
