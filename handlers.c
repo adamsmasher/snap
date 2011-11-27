@@ -404,6 +404,30 @@ Status db(Line* line) {
   return OK;
 }
 
+Status dw(Line* line) {
+  int operand;
+
+  line->byte_size = 2;
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else
+      return OK;
+  }
+
+  if(line->addr_mode != ABSOLUTE)
+    return invalid_operand(line);
+
+  if(operand > 0xFFFF)
+    return operand_too_large(operand);
+
+  line->bytes[0] = LO(operand);
+  line->bytes[1] = MID(operand);
+
+  return OK;
+}
+
+
 Status dex(Line* line) { return implicit(line, DEX); }
 
 Status equ(Line* line) {

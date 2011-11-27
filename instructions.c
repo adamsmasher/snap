@@ -31,6 +31,7 @@ void init_instructions() {
     {"bne", bne},
     {"clc", clc},
     {"db", db},
+    {"dw", dw},
     {"dex", dex},
     {"equ", equ},
     {"inc", inc},
