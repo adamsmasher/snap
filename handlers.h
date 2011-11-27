@@ -23,6 +23,7 @@ Status longa(Line* line);
 Status longi(Line* line);
 Status lsr(Line* line);
 Status org(Line* line);
+Status pad(Line* line);
 Status pea(Line* line);
 Status pha(Line* line);
 Status pla(Line* line);

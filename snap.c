@@ -113,7 +113,13 @@ Status assemble() {
 void write_assembled(FILE* fp) {
   Line* lp = first_line;
   while(lp) {
-    fwrite(lp->bytes, 1, lp->byte_size, fp);
+    if(lp->instruction && strcasecmp(lp->instruction, "pad") == 0)
+      while(lp->byte_size) {
+        fputc(0, fp);
+        lp->byte_size--;
+      }
+    else
+      fwrite(lp->bytes, 1, lp->byte_size, fp);
     lp = lp->next;
   }
 }

@@ -22,6 +22,7 @@ static Status read_dec(char** lp, int* n);
 static Status read_hex(char** lp, int* n);
 static Status read_bin(char** lp, int* n);
 static Status read_sym(char** lp, char** sym);
+static Status read_str(char** lp, char** str);
 
 /* reads in and parses a file, loads it into the global line list */
 Status read_file(FILE* fp) {
@@ -141,6 +142,13 @@ static Status get_operand(char* lp, Line* line) {
   /* if there's no operand, the operand is implied */
   if(!*lp) {
     line->addr_mode = IMPLIED;
+  }
+  else if(*lp == '"') {
+    line->addr_mode = STRING;
+    line->expr1 = malloc(sizeof(Expr));
+    line->expr1->type = STRING_EXPR;
+    if(read_str(&lp, &line->expr1->e.str) != OK)
+      return ERROR;
   }
   /* if the operand starts with a #, it's immediate */
   else if(*lp == '#') {
@@ -449,3 +457,30 @@ static Status read_sym(char** lp, char** sym) {
   return OK;
 }
 
+static Status read_str(char** lp, char** str) {
+  int len;
+  char* lp2;
+
+  /* skip the first " */
+  (*lp)++;
+  lp2 = *lp;
+
+  /* reach the end of the string */
+  while(*lp2 && *lp2 != '"') {
+    if(*lp2 == '\\') 
+      lp2++;
+    lp2++;
+  }
+  if(!*lp2)
+    return error("unterminated string constant");
+
+  len = lp2 - *lp;
+  *str = malloc(len + 1);
+  memcpy(*str, *lp, len);
+  (*str)[len] = '\0';
+
+  *lp = lp2;
+  (*lp)++;
+
+  return OK;
+}

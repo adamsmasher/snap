@@ -610,7 +610,7 @@ Status org(Line* line) {
   int operand;
 
   if(eval(line->expr1, &operand) != OK) 
-    return error("ORG directive must be known on first pass");
+    return error("ORG operand must be known on first pass");
 
   line->byte_size = 0;
 
@@ -628,6 +628,23 @@ Status org(Line* line) {
   return OK;
 }
 
+Status pad(Line* line) {
+  int operand1;
+
+  if(eval(line->expr1, &operand1) != OK)
+    return error("PAD operand must be known on first pass");
+
+  switch(line->addr_mode) {
+  case ABSOLUTE:
+    if(operand1 - pc < 0)
+      return error("PAD length must be positive");
+    line->byte_size = operand1 - pc;
+    break;
+  default: return invalid_operand(line);
+  }
+
+  return OK;
+}
 
 Status pea(Line* line) {
   int operand;

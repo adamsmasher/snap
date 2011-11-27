@@ -16,7 +16,8 @@ typedef enum {ACCUMULATOR,
               INDIRECT_LONG,
               INDIRECT_LONG_INDEXED_Y,
               STACK_RELATIVE,
-              SR_INDIRECT_INDEXED
+              SR_INDIRECT_INDEXED,
+              STRING
 } Addressing_mode;
 
 typedef struct Line_tag {

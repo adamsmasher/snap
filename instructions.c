@@ -41,6 +41,7 @@ void init_instructions() {
     {"longi", longi},
     {"lsr", lsr},
     {"org", org},
+    {"pad", pad},
     {"pea", pea},
     {"pha", pha},
     {"pla", pla},
