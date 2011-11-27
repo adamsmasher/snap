@@ -118,6 +118,8 @@ void write_assembled(FILE* fp) {
         fputc(0, fp);
         lp->byte_size--;
       }
+    else if(lp->instruction && strcasecmp(lp->instruction, "ascii") == 0)
+      fwrite(lp->expr1->e.str, 1, lp->byte_size, fp);
     else
       fwrite(lp->bytes, 1, lp->byte_size, fp);
     lp = lp->next;

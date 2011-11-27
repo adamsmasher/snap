@@ -24,6 +24,7 @@ void init_instructions() {
   Instruction_entry default_table[] = {
     {"adc", adc},
     {"and", and},
+    {"ascii", ascii},
     {"asl", asl},
     {"beq", beq},
     {"bit", bit},

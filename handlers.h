@@ -6,6 +6,7 @@
 
 Status adc(Line* line);
 Status and(Line* line);
+Status ascii(Line* line);
 Status asl(Line* line);
 Status beq(Line* line);
 Status bit(Line* line);

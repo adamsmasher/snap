@@ -230,6 +230,15 @@ Status and(Line* line) {
   return primary(line, AND_BASE, acc16);
 }
 
+Status ascii(Line* line) {
+  if(line->addr_mode != STRING)
+    return invalid_operand(line);
+
+  line->byte_size = strlen(line->expr1->e.str);
+
+  return OK;
+}
+
 Status asl(Line* line) {
   int operand;
 
