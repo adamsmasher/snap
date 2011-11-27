@@ -54,6 +54,7 @@ void init_instructions() {
     {"sec", sec},
     {"sep", sep},
     {"sta", sta},
+    {"stp", stp},
     {"sty", sty},
     {"stz", stz},
     {"tas", tas},

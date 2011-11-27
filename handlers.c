@@ -86,6 +86,8 @@
 #define STA_ABS_LONG_INDEXED_X 0x9F
 #define STA_INDEXED_INDIRECT_X 0x81
 
+#define STP 0xDB
+
 #define STY_ABS 0x8C
 #define STY_DP 0x84
 #define STY_DP_INDEXED_X 0x94
@@ -796,6 +798,8 @@ Status sta(Line* line) {
 
   return OK;
 }
+
+Status stp(Line* line) { return implicit(line, STP); }
 
 Status sty(Line* line) {
   int operand;
