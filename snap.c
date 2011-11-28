@@ -85,6 +85,7 @@ Status assemble() {
     /* continue doing passes as long as we're missing labels */
     do {
       lp = first_line;
+      acc16 = index16 = 0;
       missing_labels = 0;
       while(lp) {
         line_num = lp->line_num;
