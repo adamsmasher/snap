@@ -37,6 +37,10 @@
 
 #define CLC 0x18
 
+#define DEC_ACC 0x3A
+#define DEC_DP 0xC6
+#define DEC_ABS 0xCE
+
 #define DEX 0xCA
 
 #define INC_ACC 0x1A
@@ -447,6 +451,43 @@ Status dw(Line* line) {
   return OK;
 }
 
+Status dec(Line* line) {
+  int operand;
+
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else {
+      line->byte_size = 3;
+      return OK;
+    }
+  }
+
+  switch(line->addr_mode) {
+  case ACCUMULATOR:
+    line->byte_size = 1;
+    line->bytes[0] = DEC_ACC;
+    break;
+  case ABSOLUTE:
+    if(operand <= 0xFF) {
+      line->byte_size = 2;
+      line->bytes[0] = DEC_DP;
+    }
+    else if(operand <= 0xFFFF) {
+      line->byte_size = 3;
+      line->bytes[0] = DEC_ABS;
+    }
+    else
+      return operand_too_large(operand);
+    line->bytes[1] = LO(operand);
+    line->bytes[2] = MID(operand);
+    break;
+  default:
+    return invalid_operand(line);
+  }
+
+  return OK;
+}
 
 Status dex(Line* line) { return implicit(line, DEX); }
 
