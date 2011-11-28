@@ -189,8 +189,20 @@ static Status get_operand(char* lp, Line* line) {
   else if(*lp == '#') {
     line->addr_mode = IMMEDIATE;
 
-    /* skip past the # and read the expression */
     lp++;
+    if(*lp == '^') {
+      line->modifier = IMMEDIATE_HI;
+      lp++;
+    }
+    else if(*lp == '>') {
+      line->modifier = IMMEDIATE_MID;
+      lp++;
+    }
+    else if(*lp == '<') {
+      line->modifier = IMMEDIATE_LO;
+      lp++;
+    }
+
     line->expr1 = malloc(sizeof(Expr));
     if(read_expr(&lp, line->expr1) != OK)
       return ERROR;

@@ -20,6 +20,12 @@ typedef enum {ACCUMULATOR,
               STRING
 } Addressing_mode;
 
+typedef enum {NONE,
+              IMMEDIATE_HI,
+              IMMEDIATE_MID,
+              IMMEDIATE_LO
+} Addressing_modifier;
+
 typedef struct Line_tag {
   /* linked list pointer */
   struct Line_tag* next;
@@ -34,6 +40,7 @@ typedef struct Line_tag {
   /* almost all addressing modes only have one expression - the exception
      being the MVN/MVP one */
   Addressing_mode addr_mode;
+  Addressing_modifier modifier;
   Expr* expr1;
   Expr* expr2;
 

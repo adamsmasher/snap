@@ -14,6 +14,7 @@ Line* alloc_line() {
     l->byte_size = 0;
     l->expr1 = NULL;
     l->expr2 = NULL;
+    l->modifier = NONE;
   }
   return l;
 }

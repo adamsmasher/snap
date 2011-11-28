@@ -134,6 +134,24 @@ Status jump_out_of_bounds(Line* line) {
     return error("destination must be within same bank as jump");
 }
 
+static int immediate(int operand, Addressing_modifier mod, int sixteen) {
+  if(sixteen) {
+    switch(mod) {
+    case IMMEDIATE_HI: return (operand && 0xFFFF00) >> 8;
+    case IMMEDIATE_MID: return operand && 0xFFFF;
+    case IMMEDIATE_LO: return operand && 0xFFFF;
+    default: return operand;
+    }
+  }
+  else {
+    switch(mod) {
+    case IMMEDIATE_HI: return (operand && 0xFF0000) >> 16;
+    case IMMEDIATE_MID: return (operand && 0x00FF00) >> 8;
+    case IMMEDIATE_LO: return operand && 0xFF;
+    default: return operand;
+    }
+  }
+}
 
 static Status primary(Line* line, int base, int sixteen_bit) {
   int operand;
@@ -158,7 +176,8 @@ static Status primary(Line* line, int base, int sixteen_bit) {
 
   switch(line->addr_mode) {
   case IMMEDIATE:
-    line->byte_size = acc16 ? 3 : 2;
+    operand = immediate(operand, line->modifier, sixteen_bit);
+    line->byte_size = sixteen_bit ? 3 : 2;
     line->bytes[0] = base + PRIMARY_IMM;
     line->bytes[1] = LO(operand);
     if(sixteen_bit) line->bytes[2] = MID(operand);
@@ -329,6 +348,7 @@ Status bit(Line* line) {
 
   switch(line->addr_mode) {
   case IMMEDIATE:
+    operand = immediate(operand, line->modifier, acc16);
     line->byte_size = acc16 ? 3 : 2;
     line->bytes[0] = BIT_IMM;
     line->bytes[1] = LO(operand);
@@ -550,6 +570,7 @@ Status ldx(Line* line) {
 
   switch(line->addr_mode) {
   case IMMEDIATE:
+    operand = immediate(operand, line->modifier, index16);
     line->byte_size = index16 ? 3 : 2;
     line->bytes[0] = LDX_IMM;
     line->bytes[1] = LO(operand);
@@ -725,6 +746,7 @@ Status rep(Line* line) {
 
   switch(line->addr_mode) {
   case IMMEDIATE:
+    operand = immediate(operand, line->modifier, 0);
     if(operand > 0xFF)
       return operand_too_large(operand);
     line->bytes[0] = REP;
@@ -755,6 +777,7 @@ Status sep(Line* line) {
 
   switch(line->addr_mode) {
   case IMMEDIATE:
+    operand = immediate(operand, line->modifier, 0);
     if(operand > 0xFF)
       return operand_too_large(operand);
     line->bytes[0] = SEP;
