@@ -64,9 +64,13 @@
 
 #define PHA 0x48
 
+#define PHP 0x08
+
 #define PLA 0x68
 
 #define PLD 0x2B
+
+#define PLP 0x28
 
 #define PLY 0x7A
 
@@ -729,8 +733,10 @@ Status pea(Line* line) {
 }
 
 Status pha(Line* line) { return implicit(line, PHA); }
+Status php(Line* line) { return implicit(line, PHP); }
 Status pla(Line* line) { return implicit(line, PLA); }
 Status pld(Line* line) { return implicit(line, PLD); }
+Status plp(Line* line) { return implicit(line, PLP); }
 Status ply(Line* line) { return implicit(line, PLY); }
 
 Status rep(Line* line) {
