@@ -69,6 +69,8 @@
 
 #define REP 0xC2
 
+#define RTI 0x40
+
 #define RTL 0x6B
 
 #define RTS 0x60
@@ -757,6 +759,7 @@ Status rep(Line* line) {
   return OK;
 }
 
+Status rti(Line* line) { return implicit(line, RTI); }
 Status rtl(Line* line) { return implicit(line, RTL); }
 Status rts(Line* line) { return implicit(line, RTS); }
 Status sbc(Line* line) { return primary(line, SBC_BASE, acc16); }

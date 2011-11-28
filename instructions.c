@@ -51,6 +51,7 @@ void init_instructions() {
     {"pld", pld},
     {"ply", ply},
     {"rep", rep},
+    {"rti", rti},
     {"rtl", rtl},
     {"rts", rts},
     {"sbc", sbc},
