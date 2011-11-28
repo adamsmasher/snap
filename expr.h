@@ -3,7 +3,7 @@
 
 #include "error.h"
 
-typedef enum {SYMBOL, NUMBER, SUB, STRING_EXPR} Expr_type;
+typedef enum {SYMBOL, NUMBER, ADD, SUB, STRING_EXPR} Expr_type;
 
 typedef struct Expr_t {
   Expr_type type;

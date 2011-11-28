@@ -18,6 +18,7 @@ static char* get_label(char* l, char** label);
 static char* get_instruction(char* l, char** instruction);
 static Status get_operand(char* lp, Line* l);
 static Status read_expr(char** lp, Expr* expr);
+static Status read_atom(char** lp, Expr* expr);
 static Status read_dec(char** lp, int* n);
 static Status read_hex(char** lp, int* n);
 static Status read_bin(char** lp, int* n);
@@ -350,6 +351,31 @@ static Status get_operand(char* lp, Line* line) {
 }  
 
 static Status read_expr(char** lp, Expr* expr) {
+  Expr* l;
+  l = malloc(sizeof(Expr));
+  if(read_atom(lp, l) != OK)
+    return ERROR;
+
+  while(**lp && isspace(**lp)) (*lp)++;
+
+  if(**lp == '-' || **lp == '+') {
+    expr->e.subexpr[0] = l;
+    expr->e.subexpr[1] = malloc(sizeof(Expr));
+    if(**lp == '-')
+      expr->type = SUB;
+    else if(**lp == '+')
+      expr->type = ADD;
+    (*lp)++;
+    while(**lp && isspace(**lp)) (*lp)++;
+    return read_expr(lp, expr->e.subexpr[1]);
+  }
+  else {
+    *expr = *l;
+    return OK;
+  }
+}
+
+static Status read_atom(char** lp, Expr* expr) {
   if(isdigit(**lp) || **lp == '%' || **lp == '$') {
     int l;
     if(isdigit(**lp)) {
@@ -366,46 +392,17 @@ static Status read_expr(char** lp, Expr* expr) {
       if(read_hex(lp, &l) != OK)
         return ERROR;
     }
-
-    /* skip whitespace */
-    while(**lp && isspace(**lp)) (*lp)++;
-
-    if(**lp == '-') {
-      expr->type = SUB;
-      expr->e.subexpr[0] = malloc(sizeof(Expr));
-      expr->e.subexpr[1] = malloc(sizeof(Expr));
-      expr->e.subexpr[0]->type = NUMBER;
-      expr->e.subexpr[0]->e.num = l;
-      (*lp)++;
-      while(**lp && isspace(**lp)) (*lp)++;
-      return read_expr(lp, expr->e.subexpr[1]);
-    }
-    else {
-      expr->type = NUMBER;
-      expr->e.num = l;
-      return OK;
-    }
+    expr->type = NUMBER;
+    expr->e.num = l;
+    return OK;
   }
   else {
     char* l;
     if(read_sym(lp, &l) != OK)
       return ERROR;
-    while(**lp && isspace(**lp)) (*lp)++;
-    if(**lp == '-') {
-      expr->type = SUB;
-      expr->e.subexpr[0] = malloc(sizeof(Expr));
-      expr->e.subexpr[1] = malloc(sizeof(Expr));
-      expr->e.subexpr[0]->type = SYMBOL;
-      expr->e.subexpr[0]->e.sym = l;
-      (*lp)++;
-      while(**lp && isspace(**lp)) (*lp)++;
-      return read_expr(lp, expr->e.subexpr[1]);
-    }
-    else {
-      expr->type = SYMBOL;
-      expr->e.sym = l;
-      return OK;
-    }
+    expr->type = SYMBOL;
+    expr->e.sym = l;
+    return OK;
   }
 }
 

@@ -23,12 +23,16 @@ Status eval(Expr* e, int* result) {
           return ERROR;
     }
     return OK;
+  case ADD:
   case SUB:
     if(eval(e->e.subexpr[0], &l) != OK)
       return ERROR;
     if(eval(e->e.subexpr[1], &r) != OK)
       return ERROR;
-    *result = l - r; 
+    if(e->type == ADD)
+      *result = l + r; 
+    else if(e->type == SUB)
+      *result = l - r;
     return OK;
   default: return ERROR;
   }
