@@ -292,9 +292,9 @@ Status beq(Line* line) {
 
   switch(line->addr_mode) {
   case ABSOLUTE:
-    if(operand - pc >= 128 || operand - pc < -128)
+    if(operand - pc - 2 >= 128 || operand - pc - 2 < -128)
       return branch_out_of_bounds(line);
-    dest = (char)(operand - pc);
+    dest = (char)(operand - pc - 2);
     line->bytes[0] = BEQ;
     line->bytes[1] = dest;
     break;
@@ -368,9 +368,9 @@ Status bne(Line* line) {
 
   switch(line->addr_mode) {
   case ABSOLUTE:
-    if(operand - pc >= 128 || operand - pc < -128)
+    if(operand - pc - 2 >= 128 || operand - pc - 2 < -128)
       return branch_out_of_bounds(line);
-    dest = (char)(operand - pc);
+    dest = (char)(operand - pc - 2);
     line->bytes[0] = BNE;
     line->bytes[1] = dest;
     break;
