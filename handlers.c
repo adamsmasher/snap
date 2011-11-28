@@ -47,6 +47,8 @@
 #define JMP_ABS                  0x4C
 #define JMP_ABS_INDEXED_INDIRECT 0x7C
 
+#define JSL 0x22
+
 #define JSR_ABS                  0x20
 #define JSR_ABS_INDEXED_INDIRECT 0xFC
 
@@ -519,6 +521,34 @@ Status jmp(Line* line) {
 
   return OK;
 }
+
+Status jsl(Line* line) {
+  int operand;
+
+  line->byte_size = 4;
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else {
+      return OK;
+    }
+  }
+
+  switch(line->addr_mode) {
+  case ABSOLUTE:
+    if(operand > 0xFFFFFF)
+      return operand_too_large(operand);
+    line->bytes[0] = JSL;
+    line->bytes[1] = LO(operand);
+    line->bytes[2] = MID(operand);
+    line->bytes[3] = HI(operand);
+    break;
+  default: return invalid_operand(line);
+  }
+
+  return OK;
+}
+
 
 
 Status jsr(Line* line) {

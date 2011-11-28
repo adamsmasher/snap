@@ -39,6 +39,7 @@ void init_instructions() {
     {"inc", inc},
     {"inx", inx},
     {"jmp", jmp},
+    {"jsl", jsl},
     {"jsr", jsr},
     {"lda", lda},
     {"ldx", ldx},
