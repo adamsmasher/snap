@@ -78,17 +78,20 @@ Status read_file(FILE* fp) {
 }
 
 Status incsrc(Line* line) {
-  char* backup;
+  char* backup_filename;
+  int backup_linenum;
   if(line->addr_mode != STRING || line->expr1->type != STRING_EXPR)
     return invalid_operand(line);
 
-  backup = current_filename;
+  backup_filename = current_filename;
+  backup_linenum = line_num;
   current_filename = line->expr1->e.str;
 
   if(load_file(current_filename) != OK)
     return ERROR;
 
-  current_filename = backup;
+  current_filename = backup_filename;
+  line_num = backup_linenum;
 
   return OK;
 }
