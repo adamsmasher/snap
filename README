@@ -16,7 +16,6 @@ TODO:
 -remaining instructions/addressing modes
 -a bunch more directives
 -more features for the existing directives
--Local labels
 -riddled with bugs I am sure
 
 WHAT'S DONE:
@@ -27,7 +26,7 @@ WHAT'S DONE:
 ; comments look like this
 
 LabelsLookLikeThis:
-.orThis: ; eventually this will be the syntax for local labels
+.localLabelsLookLikeThis:
 
 DefinesLookLikeThis: equ $20
 
