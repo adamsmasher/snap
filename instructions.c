@@ -46,6 +46,7 @@ void init_instructions() {
     {"longa", longa},
     {"longi", longi},
     {"lsr", lsr},
+    {"ora", ora},
     {"org", org},
     {"pad", pad},
     {"pea", pea},

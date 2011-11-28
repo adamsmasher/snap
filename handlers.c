@@ -63,6 +63,8 @@
 #define LSR_ABS 0x4E
 #define LSR_DP 0x46
 
+#define ORA_BASE 0x00
+
 #define PEA 0xF4
 
 #define PHA 0x48
@@ -710,6 +712,8 @@ Status lsr(Line* line) {
 
   return OK;
 }
+
+Status ora(Line* line) { return primary(line, ORA_BASE, acc16); }
 
 Status org(Line* line) {
   int operand;

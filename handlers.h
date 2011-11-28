@@ -27,6 +27,7 @@ Status ldx(Line* line);
 Status longa(Line* line);
 Status longi(Line* line);
 Status lsr(Line* line);
+Status ora(Line* line);
 Status org(Line* line);
 Status pad(Line* line);
 Status pea(Line* line);
