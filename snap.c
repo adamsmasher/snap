@@ -17,6 +17,8 @@ int usage() {
 
 /* globals */
 int acc16 = 0;
+char* current_label = "";
+int current_label_len = 0;
 char* current_filename = NULL;
 int index16 = 0;
 int line_num = 0;
@@ -87,6 +89,8 @@ Status assemble() {
       lp = first_line;
       acc16 = index16 = 0;
       missing_labels = 0;
+      current_label = "";
+      current_label_len = 0;
       while(lp) {
         line_num = lp->line_num;
         current_filename = lp->filename;
@@ -97,8 +101,10 @@ Status assemble() {
           if(!lp->instruction || strcasecmp(lp->instruction, "equ") != 0) {
             if(set_val(lp->label, pc) != OK)
               return ERROR;
-            if(lp->label[0] != '.')
-              kill_locals();
+            if(lp->label[0] != '.') {
+              current_label = lp->label;
+              current_label_len = strlen(current_label);
+            }
           }
         }
         /* assemble the instruction */

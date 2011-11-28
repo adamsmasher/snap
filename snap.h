@@ -5,6 +5,8 @@
 
 extern int acc16;
 extern char* current_filename;
+extern char* current_label;
+extern int current_label_len;
 extern int index16;
 extern int line_num;
 extern int missing_labels;

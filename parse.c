@@ -50,6 +50,12 @@ Status read_file(FILE* fp) {
     if(!lp)
       return ERROR;
 
+    if(line->label && line->label[0] != '.' &&
+       (!line->instruction || strcasecmp(line->instruction, "equ") != 0)) {
+      current_label = line->label;
+      current_label_len = strlen(current_label);
+    }
+
     if(line->instruction) {
       if(get_operand(lp, line) != OK)
         return ERROR;

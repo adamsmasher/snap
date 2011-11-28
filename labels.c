@@ -4,6 +4,7 @@
 #include "snap.h"
 #include "table.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 
@@ -16,48 +17,35 @@ typedef struct {
 } Symbol_entry;
 
 Symbol_entry symbol_table[SYMBOL_BUCKETS];
-Symbol_entry locals[SYMBOL_BUCKETS];
 
-static int lookup_symbol(char* sym, Symbol_entry* table);
+static int lookup_symbol(char* sym);
+static char* add_namespace(char* sym);
 
 Status sym_val(char* sym, int* dest) {
-  Symbol_entry* table;
-  int i;
+  int i = lookup_symbol(sym);
 
-  table = sym[0] == '.' ? locals : symbol_table;
-  i = lookup_symbol(sym, table);
-
-  if(table[i].name && table[i].defined) {
-    *dest = table[i].val;
+  if(symbol_table[i].name && symbol_table[i].defined) {
+    *dest = symbol_table[i].val;
     return OK;
   }
   else return ERROR;
 }
 
 Status set_val(char* sym, int val) {
-  Symbol_entry* table;
-  int i;
+  int i = lookup_symbol(sym);
 
-  table = sym[0] == '.' ? locals : symbol_table;
-  i = lookup_symbol(sym, table);
-
-  if(table[i].name && table[i].defined == pass + 1)
+  if(symbol_table[i].name && symbol_table[i].defined == pass + 1)
     return redefined_label(sym);
   else {
     intern_symbol(sym);
-    table[i].defined = pass + 1;
-    table[i].val = val;
+    symbol_table[i].defined = pass + 1;
+    symbol_table[i].val = val;
     return OK;
   }
 }
 
 void init_symtable() {
   bzero(symbol_table, sizeof(symbol_table));
-  bzero(locals, sizeof(locals));
-}
-
-void kill_locals() {
-  bzero(locals, sizeof(locals));
 }
 
 /* adds a copy of sym to the symbol table, with no value.
@@ -65,29 +53,51 @@ void kill_locals() {
    if symbol is already in the table, do nothing; simply return a pointer
    to the copy.*/
 char* intern_symbol(char* sym) {
-  int i;
-  Symbol_entry* table;
-
-  table = sym[0] == '.' ? locals : symbol_table;
-  i = lookup_symbol(sym, table);
-  if(table[i].name)
-    return table[i].name;
+  int i = lookup_symbol(sym);
+  if(symbol_table[i].name)
+    return symbol_table[i].name;
   else {
-    char* name_copy = strdup(sym);
-    table[i].name = name_copy;
+    char* name_copy;
+    if(sym[0] == '.')
+      name_copy = add_namespace(sym);
+    else
+      name_copy = strdup(sym);
+    symbol_table[i].name = name_copy;
     return name_copy;
   }
 }
 
-int lookup_symbol(char* sym, Symbol_entry* table) {
-  int i = hash_str(sym) % SYMBOL_BUCKETS;
+int lookup_symbol(char* sym) {
+  char* name_copy;
+  int i;
 
-  while(table[i].name && 
-        strcmp(sym, table[i].name))
+  if(sym[0] == '.')
+    name_copy = add_namespace(sym);
+  else
+    name_copy = strdup(sym);
+
+  i = hash_str(name_copy) % SYMBOL_BUCKETS;
+  while(symbol_table[i].name && 
+        strcmp(name_copy, symbol_table[i].name))
     i = (i + 1) % SYMBOL_BUCKETS;
+
+  free(name_copy);
 
   return i;
 }
 
+/* if we have a local label like .loop, and a global label like Function,
+   return Function:loop.
+   The user cannot accidentally create this label because : is forbidden in
+   labels */
+char* add_namespace(char* sym) {
+  char* copy;
+  int len = strlen(sym) + current_label_len;
+  
+  copy = malloc(len + 1);
+  memcpy(copy, current_label, len);
+  copy[current_label_len] = ':';
+  strcpy(&copy[current_label_len+1], &sym[1]); 
 
-
+  return copy;
+}
