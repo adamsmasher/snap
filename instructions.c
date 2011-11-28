@@ -1,5 +1,6 @@
 #include "instructions.h"
 
+#include "error.h"
 #include "handlers.h"
 #include "table.h"
 
@@ -29,6 +30,7 @@ void init_instructions() {
     {"beq", beq},
     {"bit", bit},
     {"bne", bne},
+    {"bpl", bpl},
     {"clc", clc},
     {"db", db},
     {"dw", dw},

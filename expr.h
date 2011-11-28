@@ -1,8 +1,6 @@
 #ifndef EXPR_H
 #define EXPR_H
 
-#include "error.h"
-
 typedef enum {SYMBOL, NUMBER, ADD, SUB, STRING_EXPR} Expr_type;
 
 typedef struct Expr_t {
@@ -14,7 +12,5 @@ typedef struct Expr_t {
     struct Expr_t* subexpr[2];
   } e;
 } Expr;
-
-Status eval(Expr* e, int* result);
 
 #endif

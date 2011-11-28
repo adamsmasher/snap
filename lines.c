@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 Line* first_line = NULL;
+Line* last_line = NULL;
 
 /* allocates and initializes a new Line. returns NULL on failure */
 Line* alloc_line() {
@@ -18,15 +19,12 @@ Line* alloc_line() {
 }
 
 void add_line(Line* line) {
-  Line* lp;
-  if(!first_line)
-    first_line = line;
+  if(!first_line) 
+    first_line = last_line = line;
   else {
-    lp = first_line;
-    while(lp->next)
-      lp = lp->next;
-    lp->next = line;
+    last_line->next = line;
     line->next = NULL;
+    last_line = line;
   }
 }
 

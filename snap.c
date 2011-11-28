@@ -17,6 +17,7 @@ int usage() {
 
 /* globals */
 int acc16 = 0;
+char* current_filename = NULL;
 int index16 = 0;
 int line_num = 0;
 int missing_labels = 0;
@@ -28,7 +29,6 @@ Status assemble();
 void write_assembled(FILE* fp);
 
 int main(int argc, char** argv) {
-  Status status;
   FILE* fp;
 
   /* we require an infile and an outfile */
@@ -39,15 +39,7 @@ int main(int argc, char** argv) {
   init_instructions();
   init_symtable();
 
-  /* open up the infile and load it into a global list of lines */
-  fp = fopen(argv[1], "r");
-  if(!fp) {
-    fprintf(stderr, "Error: could not open file %s for reading\n", argv[1]);
-    return -1;
-  }
-  status = read_file(fp);
-  fclose(fp);
-  if(status == ERROR)
+  if(load_file(argv[1]) != OK)
     return -1;
 
   /* assemble it. each line stores its own assembly code */
@@ -65,6 +57,22 @@ int main(int argc, char** argv) {
   return 0;
 }
 
+Status load_file(char* filename) {
+  FILE* fp;
+  Status status;
+
+   /* open up the infile and load it into a global list of lines */
+  fp = fopen(filename, "r");
+  if(!fp) {
+    fprintf(stderr, "Error: could not open file %s for reading\n", filename);
+    return ERROR;
+  }
+  current_filename = filename;
+  status = read_file(fp);
+  fclose(fp);
+  return status;
+}
+
 Status assemble() {
   Handler f;
   Line* lp;
@@ -80,6 +88,7 @@ Status assemble() {
       missing_labels = 0;
       while(lp) {
         line_num = lp->line_num;
+        current_filename = lp->filename;
         old_byte_size = lp->byte_size;
         /* add the label */
         if(lp->label) {

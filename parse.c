@@ -13,6 +13,7 @@
 
 #define LINE_LENGTH 256
 
+static Status incsrc(Line* line);
 static void strip_comment(char* line);
 static char* get_label(char* l, char** label);
 static char* get_instruction(char* l, char** instruction);
@@ -29,28 +30,61 @@ static Status read_str(char** lp, char** str);
 Status read_file(FILE* fp) {
   char l[LINE_LENGTH];
 
+  line_num = 0;
   while(fgets(l, LINE_LENGTH, fp)) {
     char* lp;
     Line* line = alloc_line();
+
+    /* bookkeeping */
     line_num++;
     line->line_num = line_num;
+    line->filename = current_filename;
+
     strip_comment(l);
+
     lp = get_label(l, &line->label);
     if(!lp)
       return ERROR;
+
     lp = get_instruction(lp, &line->instruction);
     if(!lp)
       return ERROR;
-    if(line->instruction)
+
+    if(line->instruction) {
       if(get_operand(lp, line) != OK)
         return ERROR;
-    if(line->label || line->instruction)
+    }
+
+    /* special case for incsrc */
+    if(line->instruction && strcasecmp(line->instruction, "incsrc") == 0) {
+      line->instruction = NULL;
+      if(line->label)
+        add_line(line);
+      if(incsrc(line) != OK)
+        return ERROR;
+    }
+    else if(line->label || line->instruction)
       add_line(line);
+
+    if(!line->instruction && !line->label)
+      free(line);
   }
   if(!feof(fp)) {
     fprintf(stderr, "Error: reading from input file\n");
     return ERROR;
   }
+
+  return OK;
+}
+
+Status incsrc(Line* line) {
+  if(line->addr_mode != STRING || line->expr1->type != STRING_EXPR)
+    return invalid_operand(line);
+
+  current_filename = line->expr1->e.str;
+
+  if(load_file(current_filename) != OK)
+    return ERROR;
 
   return OK;
 }

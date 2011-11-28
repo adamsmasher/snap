@@ -11,6 +11,7 @@ Status asl(Line* line);
 Status beq(Line* line);
 Status bit(Line* line);
 Status bne(Line* line);
+Status bpl(Line* line);
 Status clc(Line* line);
 Status db(Line* line);
 Status dw(Line* line);

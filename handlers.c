@@ -1,6 +1,7 @@
 #include "handlers.h"
 
 #include "expr.h"
+#include "eval.h"
 #include "labels.h"
 #include "lines.h"
 #include "snap.h"
@@ -30,6 +31,8 @@
 #define BIT_ABS 0x2C
 
 #define BNE 0xD0
+
+#define BPL 0x10
 
 #define CLC 0x18
 
@@ -110,10 +113,6 @@
 #define LO(x) ((char)(x))
 #define MID(x) ((char)((x) >> 8))
 #define HI(x) ((char)((x) >> 16))
-
-Status invalid_operand(Line* line) {
-  return error("invalid operand");
-}
 
 Status operand_too_large(int operand) {
   return error("operand %d too large", operand);
@@ -224,6 +223,33 @@ static Status implicit(Line* line, int op) {
   return OK;
 }
 
+Status branch(Line* line, int op) {
+  int operand;
+  char dest;
+
+  line->byte_size = 2;
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else { 
+      return OK;
+    }
+  }
+
+  switch(line->addr_mode) {
+  case ABSOLUTE:
+    if(operand - pc - 2 >= 128 || operand - pc - 2 < -128)
+      return branch_out_of_bounds(line);
+    dest = (char)(operand - pc - 2);
+    line->bytes[0] = op;
+    line->bytes[1] = dest;
+    break;
+  default: return invalid_operand(line);
+  }
+
+  return OK;
+}
+
 Status adc(Line* line) {
   return primary(line, ADC_BASE, acc16);
 }
@@ -279,32 +305,7 @@ Status asl(Line* line) {
   return OK;
 }
 
-Status beq(Line* line) {
-  int operand;
-  char dest;
-
-  line->byte_size = 2;
-  if(eval(line->expr1, &operand) != OK) {
-    if(pass)
-      return ERROR;
-    else {
-      return OK;
-    }
-  }
-
-  switch(line->addr_mode) {
-  case ABSOLUTE:
-    if(operand - pc - 2 >= 128 || operand - pc - 2 < -128)
-      return branch_out_of_bounds(line);
-    dest = (char)(operand - pc - 2);
-    line->bytes[0] = BEQ;
-    line->bytes[1] = dest;
-    break;
-  default: return invalid_operand(line);
-  }
-
-  return OK;
-}
+Status beq(Line* line) { return branch(line, BEQ); }
 
 Status bit(Line* line) {
   int operand;
@@ -355,32 +356,8 @@ Status bit(Line* line) {
 }
 
 
-Status bne(Line* line) {
-  int operand;
-  char dest;
-
-  line->byte_size = 2;
-  if(eval(line->expr1, &operand) != OK) {
-    if(pass)
-      return ERROR;
-    else { 
-      return OK;
-    }
-  }
-
-  switch(line->addr_mode) {
-  case ABSOLUTE:
-    if(operand - pc - 2 >= 128 || operand - pc - 2 < -128)
-      return branch_out_of_bounds(line);
-    dest = (char)(operand - pc - 2);
-    line->bytes[0] = BNE;
-    line->bytes[1] = dest;
-    break;
-  default: return invalid_operand(line);
-  }
-
-  return OK;
-}
+Status bne(Line* line) { return branch(line, BNE); }
+Status bpl(Line* line) { return branch(line, BPL); }
 
 Status clc(Line* line) { return implicit(line, CLC); }
 
