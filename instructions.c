@@ -66,12 +66,14 @@ void init_instructions() {
     {"stp", stp},
     {"sty", sty},
     {"stz", stz},
+    {"swa", xba},
     {"tas", tas},
     {"tax", tax},
     {"tcs", tas},
     {"tsa", tsa},
     {"tsc", tsa},
     {"txa", txa},
+    {"xba", xba},
     {"xce", xce}
   };
 

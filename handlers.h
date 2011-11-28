@@ -51,6 +51,7 @@ Status tas(Line* line);
 Status tax(Line* line);
 Status tsa(Line* line);
 Status txa(Line* line);
+Status xba(Line* line);
 Status xce(Line* line);
 
 #endif

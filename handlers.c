@@ -114,6 +114,8 @@
 
 #define TXA 0x8A
 
+#define XBA 0xEB
+
 #define XCE 0xFB
 
 #define LO(x) ((char)(x))
@@ -978,5 +980,6 @@ Status tas(Line* line) { return implicit(line, TAS); }
 Status tax(Line* line) { return implicit(line, TAX); }
 Status tsa(Line* line) { return implicit(line, TSA); }
 Status txa(Line* line) { return implicit(line, TXA); }
+Status xba(Line* line) { return implicit(line, XBA); }
 Status xce(Line* line) { return implicit(line, XCE); }
 
