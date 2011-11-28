@@ -94,9 +94,12 @@ Status assemble() {
         /* add the label */
         if(lp->label) {
           /* special case for constants */
-          if(!lp->instruction || strcasecmp(lp->instruction, "equ") != 0)
+          if(!lp->instruction || strcasecmp(lp->instruction, "equ") != 0) {
             if(set_val(lp->label, pc) != OK)
               return ERROR;
+            if(lp->label[0] != '.')
+              kill_locals();
+          }
         }
         /* assemble the instruction */
         if(lp->instruction) {
