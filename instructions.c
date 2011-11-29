@@ -36,6 +36,7 @@ void init_instructions() {
     {"dw", dw},
     {"dec", dec},
     {"dex", dex},
+    {"eor", eor},
     {"equ", equ},
     {"inc", inc},
     {"inx", inx},

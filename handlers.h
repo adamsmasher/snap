@@ -17,6 +17,7 @@ Status db(Line* line);
 Status dw(Line* line);
 Status dec(Line* line);
 Status dex(Line* line);
+Status eor(Line* line);
 Status equ(Line* line);
 Status inc(Line* line);
 Status inx(Line* line);

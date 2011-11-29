@@ -43,6 +43,8 @@
 
 #define DEX 0xCA
 
+#define EOR_BASE 0x40
+
 #define INC_ACC 0x1A
 #define INC_DP 0xE6
 #define INC_ABS 0xEE
@@ -490,6 +492,7 @@ Status dec(Line* line) {
 }
 
 Status dex(Line* line) { return implicit(line, DEX); }
+Status eor(Line* line) { return primary(line, EOR_BASE, acc16); }
 
 Status equ(Line* line) {
   int operand;
