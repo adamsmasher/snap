@@ -200,6 +200,8 @@
 
 #define STZ_ABS 0x9C
 #define STZ_DP 0x64
+#define STZ_ABS_INDEXED 0x9E
+#define STZ_DP_INDEXED 0x74
 
 #define TAD 0x5B
 
@@ -1235,13 +1237,22 @@ Status stz(Line* line) {
 
   switch(line->addr_mode) {
   case ABSOLUTE:
+  case ABSOLUTE_INDEXED_X:
     if(operand <= 0xFF) {
       line->byte_size = 2;
-      line->bytes[0] = STZ_DP;
+      switch(line->addr_mode) {
+      case ABSOLUTE: line->bytes[0] = STZ_DP; break;
+      case ABSOLUTE_INDEXED_X: line->bytes[0] = STZ_DP_INDEXED;
+      default:;
+      }
     }
     else if(operand <= 0xFFFF) {
       line->byte_size = 3;
-      line->bytes[0] = STZ_ABS;
+      switch(line->addr_mode) {
+      case ABSOLUTE: line->bytes[0] = STZ_ABS; break;
+      case ABSOLUTE_INDEXED_X: line->bytes[0] = STZ_ABS_INDEXED;
+      default:;
+      }
     }
     else
       return operand_too_large(operand);
