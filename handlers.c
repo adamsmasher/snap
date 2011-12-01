@@ -818,7 +818,7 @@ Status brl(Line* line) {
     dest = (char)(operand - pc - 3);
     line->bytes[0] = BRL;;
     line->bytes[1] = LO(dest);
-    line->bytes[1] = MID(dest);
+    line->bytes[2] = MID(dest);
     break;
   default: return invalid_operand(line);
   }
