@@ -1032,12 +1032,17 @@ Status jsr(Line* line) {
     if(HI(operand) != HI(pc))
       return jump_out_of_bounds(line);
     line->bytes[0] = JSR_ABS;
-    line->bytes[1] = LO(operand);
-    line->bytes[2] = MID(operand);
+    break;
+  case INDEXED_INDIRECT_X:
+    if(operand > 0xFFFF)
+      return operand_too_large(operand);
+    line->bytes[0] = JSR_ABS_INDEXED_INDIRECT;
     break;
   default: return invalid_operand(line);
   }
 
+  line->bytes[1] = LO(operand);
+  line->bytes[2] = MID(operand);
   return OK;
 }
 
