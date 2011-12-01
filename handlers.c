@@ -56,8 +56,10 @@
 #define BEQ 0xF0
 
 #define BIT_IMM 0x89
-#define BIT_DP 0x24
 #define BIT_ABS 0x2C
+#define BIT_DP 0x24
+#define BIT_ABS_INDEXED 0x3C
+#define BIT_DP_INDEXED 0x34
 
 #define BMI 0x30
 
@@ -747,7 +749,7 @@ Status bit(Line* line) {
         line->byte_size = acc16 ? 3 : 2;
         break;
       case ABSOLUTE:
-      case ABSOLUTE_INDEXED:
+      case ABSOLUTE_INDEXED_X:
         line->byte_size = 3;
         break;
       default: return invalid_operand(line);
@@ -763,20 +765,20 @@ Status bit(Line* line) {
     line->bytes[0] = BIT_IMM;
     break;
   case ABSOLUTE:
-  case ABSOLUTE_INDEXED:
+  case ABSOLUTE_INDEXED_X:
     if(operand <= 0xFF) {
       line->byte_size = 2;
-      switch(line->addr_mdoe) {
+      switch(line->addr_mode) {
       case ABSOLUTE: line->bytes[0] = BIT_DP; break;
-      case ABSOLUTE_INDEXED: line->bytes[0] = BIT_DP_INDEXED;
+      case ABSOLUTE_INDEXED_X: line->bytes[0] = BIT_DP_INDEXED;
       default:;
       }
     }
     else if(operand <= 0xFFFF) {
       line->byte_size = 3;
-      switch(line->addr_mdoe) {
+      switch(line->addr_mode) {
       case ABSOLUTE: line->bytes[0] = BIT_ABS; break;
-      case ABSOLUTE_INDEXED: line->bytes[0] = BIT_ABS_INDEXED;
+      case ABSOLUTE_INDEXED_X: line->bytes[0] = BIT_ABS_INDEXED;
       default:;
       }
     }
