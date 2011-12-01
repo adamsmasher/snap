@@ -475,6 +475,7 @@ Status group2(Line* line, int base) {
     }
     else
       return operand_too_large(operand);
+    break;
   default:
     return invalid_operand(line);
   }
