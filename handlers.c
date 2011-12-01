@@ -747,6 +747,7 @@ Status bit(Line* line) {
         line->byte_size = acc16 ? 3 : 2;
         break;
       case ABSOLUTE:
+      case ABSOLUTE_INDEXED:
         line->byte_size = 3;
         break;
       default: return invalid_operand(line);
@@ -760,27 +761,34 @@ Status bit(Line* line) {
     operand = immediate(operand, line->modifier, acc16);
     line->byte_size = acc16 ? 3 : 2;
     line->bytes[0] = BIT_IMM;
-    line->bytes[1] = LO(operand);
-    line->bytes[2] = MID(operand);
     break;
   case ABSOLUTE:
+  case ABSOLUTE_INDEXED:
     if(operand <= 0xFF) {
       line->byte_size = 2;
-      line->bytes[0] = BIT_DP;
+      switch(line->addr_mdoe) {
+      case ABSOLUTE: line->bytes[0] = BIT_DP; break;
+      case ABSOLUTE_INDEXED: line->bytes[0] = BIT_DP_INDEXED;
+      default:;
+      }
     }
     else if(operand <= 0xFFFF) {
       line->byte_size = 3;
-      line->bytes[0] = BIT_ABS;
+      switch(line->addr_mdoe) {
+      case ABSOLUTE: line->bytes[0] = BIT_ABS; break;
+      case ABSOLUTE_INDEXED: line->bytes[0] = BIT_ABS_INDEXED;
+      default:;
+      }
     }
     else
       return operand_too_large(operand);
-    line->bytes[1] = LO(operand);
-    line->bytes[2] = MID(operand);
     break;
   default:
     return invalid_operand(line);
   }
 
+  line->bytes[1] = LO(operand);
+  line->bytes[2] = MID(operand);
   return OK;
 }
 
