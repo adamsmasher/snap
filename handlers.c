@@ -491,19 +491,19 @@ Status indexld(Line* line, int base) {
       switch(line->addr_mode) {
       case IMMEDIATE: 
         line->byte_size = index16 ? 3 : 2;
-        break;
+        return OK;
       case ABSOLUTE:
         line->byte_size = 3;
-        break;
+        return OK;
       case ABSOLUTE_INDEXED_X:
       case ABSOLUTE_INDEXED_Y:
         if((line->addr_mode == ABSOLUTE_INDEXED_X && base == LDX_BASE) ||
            (line->addr_mode == ABSOLUTE_INDEXED_Y && base == LDY_BASE))
           return invalid_operand(line);
         line->byte_size = 3;
+        return OK;
       default: return invalid_operand(line);
       }
-      return OK;
     }
   }
 
@@ -540,6 +540,7 @@ Status indexld(Line* line, int base) {
     }
     else
       return operand_too_large(operand);
+    break;
   default:
     return invalid_operand(line);
   }
