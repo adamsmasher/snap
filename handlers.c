@@ -9,13 +9,20 @@
 #include <strings.h>
 
 #define PRIMARY_IMM 0x09
-#define PRIMARY_DP 0x05
 #define PRIMARY_ABS 0x0D
 #define PRIMARY_ABS_LONG 0x0F
+#define PRIMARY_DP 0x05
+#define PRIMARY_DP_INDIRECT 0x12
+#define PRIMARY_DP_INDIRECT_LONG 0x07
 #define PRIMARY_ABS_INDEXED_X 0x1D
 #define PRIMARY_ABS_LONG_INDEXED_X 0x1F
+#define PRIMARY_ABS_INDEXED_Y 0x19
 #define PRIMARY_DP_INDEXED_X 0x15
+#define PRIMARY_DP_INDEXED_INDIRECT_X 0x01
+#define PRIMARY_DP_INDIRECT_INDEXED_Y 0x11
+#define PRIMARY_DP_INDIRECT_LONG_INDEXED_Y 0x17
 #define PRIMARY_STACK_RELATIVE 0x03
+#define PRIMARY_SR_INDIRECT_INDEXED 0x13
 
 #define ADC_BASE 0x60
 
@@ -244,8 +251,17 @@ static Status primary(Line* line, int base, int sixteen_bit) {
       case IMMEDIATE:
         line->byte_size = sixteen_bit ? 3 : 2;
         return OK;
+      case INDIRECT:
+      case INDIRECT_LONG:
+      case INDEXED_INDIRECT_X:
+      case INDIRECT_INDEXED_Y:
+      case INDIRECT_LONG_INDEXED_Y:
       case STACK_RELATIVE:
+      case SR_INDIRECT_INDEXED:
         line->byte_size = 2;
+        return OK;
+      case ABSOLUTE_INDEXED_Y:
+        line->byte_size = 3;
         return OK;
       case ABSOLUTE:
       case ABSOLUTE_INDEXED_X:
@@ -267,16 +283,31 @@ static Status primary(Line* line, int base, int sixteen_bit) {
       return operand_too_large(operand);
     break;
   case ABSOLUTE:
+  case ABSOLUTE_INDEXED_X:
     if(operand <= 0xFF) {
       line->byte_size = 2;
-      line->bytes[0] = base + PRIMARY_DP;
+      switch(line->addr_mode) {
+      case ABSOLUTE: line->bytes[0] = base + PRIMARY_DP; break;
+      case ABSOLUTE_INDEXED_X: line->bytes[0] = base + PRIMARY_DP_INDEXED_X;
+      default:;
+      }
     }
     else if(operand <= 0xFFFF) {
       line->byte_size = 3;
-      line->bytes[0] = base + PRIMARY_ABS;
+      switch(line->addr_mode) {
+      case ABSOLUTE: line->bytes[0] = base + PRIMARY_ABS; break;
+      case ABSOLUTE_INDEXED_X: line->bytes[0] = base + PRIMARY_ABS_INDEXED_X;
+      default:;
+      }
     }
     else if(operand <= 0xFFFFFF) {
       line->byte_size = 4;
+      switch(line->addr_mode) {
+      case ABSOLUTE: line->bytes[0] = base + PRIMARY_ABS_LONG; break;
+      case ABSOLUTE_INDEXED_X:
+        line->bytes[0] = base + PRIMARY_ABS_LONG_INDEXED_X;
+      default:;
+      }
       line->bytes[0] = base + PRIMARY_ABS_LONG;
     }
     else
@@ -285,30 +316,40 @@ static Status primary(Line* line, int base, int sixteen_bit) {
     line->bytes[2] = MID(operand);
     line->bytes[3] = HI(operand);
     break;
-  case ABSOLUTE_INDEXED_X:
-    if(operand <= 0xFF) {
-      line->byte_size = 2;
-      line->bytes[0] = base + PRIMARY_DP_INDEXED_X;
-    }
-    else if(operand <= 0xFFFF) {
-      line->byte_size = 3;
-      line->bytes[0] = base + PRIMARY_ABS_INDEXED_X;
-    }
-    else if(operand <= 0xFFFFFF) {
-      line->byte_size = 4;
-      line->bytes[0] = base + PRIMARY_ABS_LONG_INDEXED_X;
-    }
-    else
+  case ABSOLUTE_INDEXED_Y:
+    line->byte_size = 3;
+    if(operand > 0xFFFF)
       return operand_too_large(operand);
+    line->bytes[0] = base + PRIMARY_ABS_INDEXED_Y;
     line->bytes[1] = LO(operand);
     line->bytes[2] = MID(operand);
-    line->bytes[3] = HI(operand);
     break;
+  case INDIRECT:
+  case INDIRECT_LONG:
+  case INDIRECT_INDEXED_Y:
+  case INDIRECT_LONG_INDEXED_Y:
+  case SR_INDIRECT_INDEXED:
   case STACK_RELATIVE:
     line->byte_size = 2;
     if(operand > 0xFF)
       return operand_too_large(operand);
-    line->bytes[0] = base + PRIMARY_STACK_RELATIVE;
+    switch(line->addr_mode) {
+    case INDIRECT: line->bytes[0] = base + PRIMARY_DP_INDIRECT; break;
+    case INDIRECT_LONG: line->bytes[0] = base + PRIMARY_DP_INDIRECT_LONG; break;
+    case INDIRECT_INDEXED_Y:
+      line->bytes[0] = base + PRIMARY_DP_INDIRECT_INDEXED_Y;
+      break;
+    case INDEXED_INDIRECT_X:
+      line->bytes[0] = base + PRIMARY_DP_INDEXED_INDIRECT_X;
+      break;
+    case INDIRECT_LONG_INDEXED_Y:
+      line->bytes[0] = base + PRIMARY_DP_INDIRECT_LONG_INDEXED_Y;
+      break;
+    case STACK_RELATIVE: line->bytes[0] = base + PRIMARY_STACK_RELATIVE; break;
+    case SR_INDIRECT_INDEXED:
+      line->bytes[0] = base + PRIMARY_SR_INDIRECT_INDEXED;
+    default:;
+    }
     line->bytes[1] = LO(operand);
     break;
   default:
