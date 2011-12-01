@@ -436,6 +436,7 @@ Status group2(Line* line, int base) {
     case ASL_BASE:
     case LSR_BASE:
     case ROL_BASE:
+    case ROR_BASE:
       line->bytes[0] = base | (G2_ACC << 2);
       break;
    default: return invalid_operand(line);
