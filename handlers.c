@@ -37,8 +37,8 @@
 #define INDEX_LOAD_DP_INDEXED 0x14
 
 #define INDEX_CMP_IMM 0x00
-#define INDEX_CMP_DP  0x0C
-#define INDEX_CMP_ABS 0x04
+#define INDEX_CMP_ABS 0x0C
+#define INDEX_CMP_DP  0x04
 
 #define TEST_ABS 0x0C
 #define TEST_DP  0x04
