@@ -25,23 +25,45 @@
 #define ASL_DP 0x06
 #define ASL_ABS 0x0E
 
+#define BCC 0x90
+
+#define BCS 0xB0
+
 #define BEQ 0xF0
 
 #define BIT_IMM 0x89
 #define BIT_DP 0x24
 #define BIT_ABS 0x2C
 
+#define BMI 0x30
+
 #define BNE 0xD0
 
 #define BPL 0x10
 
+#define BRA 0x80
+
+#define BVC 0x50
+
+#define BVS 0x70
+
 #define CLC 0x18
+
+#define CLD 0xD8
+
+#define CLI 0x58
+
+#define CLV 0xB8
+
+#define CMP_BASE 0xC0
 
 #define DEC_ACC 0x3A
 #define DEC_DP 0xC6
 #define DEC_ABS 0xCE
 
 #define DEX 0xCA
+
+#define DEY 0x88
 
 #define EOR_BASE 0x40
 
@@ -50,6 +72,8 @@
 #define INC_ABS 0xEE
 
 #define INX 0xE8
+
+#define INY 0xC8
 
 #define JMP_ABS                  0x4C
 #define JMP_ABS_INDEXED_INDIRECT 0x7C
@@ -69,19 +93,35 @@
 #define LSR_ABS 0x4E
 #define LSR_DP 0x46
 
+#define NOP 0xEA
+
 #define ORA_BASE 0x00
 
 #define PEA 0xF4
 
 #define PHA 0x48
 
+#define PHB 0x8B
+
+#define PHD 0x0B
+
+#define PHK 0x4B
+
 #define PHP 0x08
 
+#define PHX 0xDA
+
+#define PHY 0x5A
+
 #define PLA 0x68
+
+#define PLB  0xAB
 
 #define PLD 0x2B
 
 #define PLP 0x28
+
+#define PLX 0xFA
 
 #define PLY 0x7A
 
@@ -96,6 +136,10 @@
 #define SBC_BASE 0xE0
 
 #define SEC 0x38
+
+#define SED 0xF8
+
+#define SEI 0x78
 
 #define SEP 0xE2
 
@@ -115,13 +159,31 @@
 #define STZ_ABS 0x9C
 #define STZ_DP 0x64
 
+#define TAD 0x5B
+
 #define TAS 0x1B
 
 #define TAX 0xAA
 
+#define TAY 0xA8
+
+#define TDA 0x7B
+
 #define TSA 0x3B
 
+#define TSX 0xBA
+
 #define TXA 0x8A
+
+#define TXS 0x9A
+
+#define TXY 0x9B
+
+#define TYA 0x98
+
+#define TYX 0xBB
+
+#define WAI 0xCB
 
 #define XBA 0xEB
 
@@ -351,6 +413,8 @@ Status asl(Line* line) {
   return OK;
 }
 
+Status bcc(Line* line) { return branch(line, BCC); }
+Status bcs(Line* line) { return branch(line, BCS); }
 Status beq(Line* line) { return branch(line, BEQ); }
 
 Status bit(Line* line) {
@@ -402,11 +466,17 @@ Status bit(Line* line) {
   return OK;
 }
 
-
+Status bmi(Line* line) { return branch(line, BMI); }
 Status bne(Line* line) { return branch(line, BNE); }
 Status bpl(Line* line) { return branch(line, BPL); }
-
+Status bra(Line* line) { return branch(line, BRA); }
+Status bvc(Line* line) { return branch(line, BVC); }
+Status bvs(Line* line) { return branch(line, BVS); }
 Status clc(Line* line) { return implicit(line, CLC); }
+Status cld(Line* line) { return implicit(line, CLD); }
+Status cli(Line* line) { return implicit(line, CLI); }
+Status clv(Line* line) { return implicit(line, CLV); }
+Status cmp(Line* line) { return primary(line, CMP_BASE, acc16); }
 
 Status db(Line* line) {
   int operand;
@@ -492,6 +562,7 @@ Status dec(Line* line) {
 }
 
 Status dex(Line* line) { return implicit(line, DEX); }
+Status dey(Line* line) { return implicit(line, DEY); }
 Status eor(Line* line) { return primary(line, EOR_BASE, acc16); }
 
 Status equ(Line* line) {
@@ -554,6 +625,7 @@ Status inc(Line* line) {
 }
 
 Status inx(Line* line) { return implicit(line, INX); }
+Status iny(Line* line) { return implicit(line, INY); }
 
 Status jmp(Line* line) {
   int operand;
@@ -757,6 +829,7 @@ Status lsr(Line* line) {
   return OK;
 }
 
+Status nop(Line* line) { return implicit(line, NOP); }
 Status ora(Line* line) { return primary(line, ORA_BASE, acc16); }
 
 Status org(Line* line) {
@@ -824,10 +897,17 @@ Status pea(Line* line) {
 }
 
 Status pha(Line* line) { return implicit(line, PHA); }
+Status phb(Line* line) { return implicit(line, PHB); }
+Status phd(Line* line) { return implicit(line, PHD); }
+Status phk(Line* line) { return implicit(line, PHK); }
 Status php(Line* line) { return implicit(line, PHP); }
+Status phx(Line* line) { return implicit(line, PHX); }
+Status phy(Line* line) { return implicit(line, PHY); }
 Status pla(Line* line) { return implicit(line, PLA); }
+Status plb(Line* line) { return implicit(line, PLB); }
 Status pld(Line* line) { return implicit(line, PLD); }
 Status plp(Line* line) { return implicit(line, PLP); }
+Status plx(Line* line) { return implicit(line, PLX); }
 Status ply(Line* line) { return implicit(line, PLY); }
 
 Status rep(Line* line) {
@@ -860,6 +940,8 @@ Status rtl(Line* line) { return implicit(line, RTL); }
 Status rts(Line* line) { return implicit(line, RTS); }
 Status sbc(Line* line) { return primary(line, SBC_BASE, acc16); }
 Status sec(Line* line) { return implicit(line, SEC); }
+Status sed(Line* line) { return implicit(line, SED); }
+Status sei(Line* line) { return implicit(line, SEI); }
 
 Status sep(Line* line) {
   int operand;
@@ -1035,10 +1117,19 @@ Status stz(Line* line) {
   return OK;
 }
 
+Status tad(Line* line) { return implicit(line, TAD); }
 Status tas(Line* line) { return implicit(line, TAS); }
 Status tax(Line* line) { return implicit(line, TAX); }
+Status tay(Line* line) { return implicit(line, TAY); }
+Status tda(Line* line) { return implicit(line, TDA); }
 Status tsa(Line* line) { return implicit(line, TSA); }
+Status tsx(Line* line) { return implicit(line, TSX); }
 Status txa(Line* line) { return implicit(line, TXA); }
+Status txs(Line* line) { return implicit(line, TXS); }
+Status txy(Line* line) { return implicit(line, TXY); }
+Status tya(Line* line) { return implicit(line, TYA); }
+Status tyx(Line* line) { return implicit(line, TYX); }
+Status wai(Line* line) { return implicit(line, WAI); }
 Status xba(Line* line) { return implicit(line, XBA); }
 Status xce(Line* line) { return implicit(line, XCE); }
 
