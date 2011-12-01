@@ -248,6 +248,7 @@ static Status get_operand(char* lp, Line* line) {
     /* if there's a comma followed by a 'Y', we're indirect long Y indexed */
     else if(*lp == ',') {
       /* skip whitespace after the comma */
+      lp++;
       while(*lp && isspace(*lp)) lp++;
       /* expect Y */
       if(tolower(*lp) != 'y')
@@ -289,6 +290,7 @@ static Status get_operand(char* lp, Line* line) {
         indirect indexed y: lda ($01), Y */
       else if(*lp == ',') {
         /* skip whitespace after the comma */
+        lp++;
         while(*lp && isspace(*lp)) lp++;
         
         /* expect a Y */
@@ -340,9 +342,18 @@ static Status get_operand(char* lp, Line* line) {
         lp++;
         while(*lp && isspace(*lp)) lp++;
 
+        /* expect a ',' */
+        if(*lp != ',')
+          return expected(',', *lp);
+
+        /* move past the ',' */
+        lp++;
+        while(*lp && isspace(*lp)) lp++;
+
         /* expect a 'Y' */
         if(tolower(*lp) != 'y')
           return expected('Y', *lp);
+        lp++;
         line->addr_mode = SR_INDIRECT_INDEXED;
       }
       /* anything else after the , is unexpected and will be caught at the
