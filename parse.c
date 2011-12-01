@@ -239,6 +239,7 @@ static Status get_operand(char* lp, Line* line) {
       return expected(']', *lp);
     
     /* skip any whitespace after the ] */
+    lp++;
     while(*lp && isspace(*lp)) lp++;
 
     /* if we're at the end of the line, it's just indirect long */
@@ -465,9 +466,13 @@ static Status read_atom(char** lp, Expr* expr) {
   }
 }
 
+static int numsep(char c) {
+  return isspace(c) || c == ',' || c == '-' || c == '+' || c == ']' || c == ')';
+}
+
 static Status read_dec(char** lp, int* n) {
   *n = 0;
-  while(**lp && !isspace(**lp) && **lp != ',') {
+  while(**lp && !numsep(**lp)) {
     if(!isdigit(**lp))
       return error("unexpected '%c' in numerical constant", **lp);
     *n = *n * 10 + (**lp - '0');
@@ -478,7 +483,7 @@ static Status read_dec(char** lp, int* n) {
 
 static Status read_hex(char** lp, int* n) {
   *n = 0;
-  while(**lp && !isspace(**lp)) {
+  while(**lp && !numsep(**lp)) {
     if(!isxdigit(**lp))
       return error("unexpected '%c' in numerical constant", **lp);
     if(isdigit(**lp))
@@ -492,7 +497,7 @@ static Status read_hex(char** lp, int* n) {
 
 static Status read_bin(char** lp, int* n) {
   *n = 0;
-  while(**lp && !isspace(**lp)) {
+  while(**lp && !numsep(**lp)) {
     if(**lp != '0' && **lp != '1')
       return error("unexpected '%c' in numerical constant", **lp);
     *n = *n * 2 + (**lp - '0');
