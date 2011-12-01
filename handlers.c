@@ -329,7 +329,6 @@ static Status primary(Line* line, int base, int sixteen_bit) {
     operand = immediate(operand, line->modifier, sixteen_bit);
     line->byte_size = sixteen_bit ? 3 : 2;
     line->bytes[0] = base + PRIMARY_IMM;
-    line->bytes[1] = LO(operand);
     if(sixteen_bit) line->bytes[2] = MID(operand);
     else if(operand > 0xFF)
       return operand_too_large(operand);
@@ -360,21 +359,15 @@ static Status primary(Line* line, int base, int sixteen_bit) {
         line->bytes[0] = base + PRIMARY_ABS_LONG_INDEXED_X;
       default:;
       }
-      line->bytes[0] = base + PRIMARY_ABS_LONG;
     }
     else
       return operand_too_large(operand);
-    line->bytes[1] = LO(operand);
-    line->bytes[2] = MID(operand);
-    line->bytes[3] = HI(operand);
     break;
   case ABSOLUTE_INDEXED_Y:
     line->byte_size = 3;
     if(operand > 0xFFFF)
       return operand_too_large(operand);
     line->bytes[0] = base + PRIMARY_ABS_INDEXED_Y;
-    line->bytes[1] = LO(operand);
-    line->bytes[2] = MID(operand);
     break;
   case INDIRECT:
   case INDIRECT_LONG:
@@ -403,12 +396,14 @@ static Status primary(Line* line, int base, int sixteen_bit) {
       line->bytes[0] = base + PRIMARY_SR_INDIRECT_INDEXED;
     default:;
     }
-    line->bytes[1] = LO(operand);
     break;
   default:
     return invalid_operand(line);
   }
 
+  line->bytes[1] = LO(operand);
+  line->bytes[2] = MID(operand);
+  line->bytes[3] = HI(operand);
   return OK;
 }
 
@@ -618,7 +613,7 @@ Status testbits(Line* line, int base) {
     line->bytes[0] = base + TEST_DP;
     line->byte_size = 2;
   }
-  if(operand <= 0xFFFF) {
+  else if(operand <= 0xFFFF) {
     line->bytes[0] = base + TEST_ABS;
     line->byte_size = 3;
   }
