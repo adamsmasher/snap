@@ -1,9 +1,5 @@
 snap (Super Nintendo Assembling Program) is a multi-pass 65816 assembler.
 
-Many opcodes are implemented, many are not. Many are implemented but missing
-addressing modes. It's all just gruntwork. I'm writing a game and implementing
-on an as-need basis.
-
 Expression parsing isn't done yet. It may be, one day. As need basis.
 
 Macros are not implemented. They may never be.
@@ -11,15 +7,14 @@ Macros are not implemented. They may never be.
 Syntax generally follows that laid out in the WDC 65816 docs and datasheets.
 
 TODO:
--immediate mode byte selectors
+-absolute modifiers
 -more math/expression parsing
--remaining instructions/addressing modes
 -a bunch more directives
 -more features for the existing directives
 -riddled with bugs I am sure
 
 WHAT'S DONE:
--most common opcodes/addressing modes
+-all instructions/addressing modes
 -very very basic math/expression parsing
 -multipass optimization
 

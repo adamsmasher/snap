@@ -24,13 +24,30 @@
 #define PRIMARY_STACK_RELATIVE 0x03
 #define PRIMARY_SR_INDIRECT_INDEXED 0x13
 
+#define G2_ACC 0x2
+#define G2_DP 0x1
+#define G2_ABS 0x3
+#define G2_DP_INDEXED 0x5
+#define G2_ABS_INDEXED 0x7
+
+#define INDEX_LOAD_IMM 0x00 
+#define INDEX_LOAD_ABS 0x0C
+#define INDEX_LOAD_DP 0x04
+#define INDEX_LOAD_ABS_INDEXED 0x1C
+#define INDEX_LOAD_DP_INDEXED 0x14
+
+#define INDEX_CMP_IMM 0x00
+#define INDEX_CMP_DP  0x0C
+#define INDEX_CMP_ABS 0x04
+
+#define TEST_ABS 0x0C
+#define TEST_DP  0x04
+
 #define ADC_BASE 0x60
 
 #define AND_BASE 0x20
 
-#define ASL_ACC 0x0A
-#define ASL_DP 0x06
-#define ASL_ABS 0x0E
+#define ASL_BASE 0x02
 
 #define BCC 0x90
 
@@ -50,6 +67,10 @@
 
 #define BRA 0x80
 
+#define BRK 0x00
+
+#define BRL 0x82
+
 #define BVC 0x50
 
 #define BVS 0x70
@@ -64,9 +85,13 @@
 
 #define CMP_BASE 0xC0
 
+#define COP 0x02
+
+#define CPX_BASE 0xE0
+#define CPY_BASE 0xC0
+
 #define DEC_ACC 0x3A
-#define DEC_DP 0xC6
-#define DEC_ABS 0xCE
+#define DEC_BASE 0xC6
 
 #define DEX 0xCA
 
@@ -75,15 +100,18 @@
 #define EOR_BASE 0x40
 
 #define INC_ACC 0x1A
-#define INC_DP 0xE6
-#define INC_ABS 0xEE
+#define INC_BASE 0xE6
 
 #define INX 0xE8
 
 #define INY 0xC8
 
+#define JML_ABS      0x5C
+#define JML_INDIRECT 0xDC
+
 #define JMP_ABS                  0x4C
-#define JMP_ABS_INDEXED_INDIRECT 0x7C
+#define JMP_INDIRECT             0x6C
+#define JMP_INDEXED_INDIRECT     0x7C
 
 #define JSL 0x22
 
@@ -92,19 +120,25 @@
 
 #define LDA_BASE 0xA0
 
-#define LDX_IMM 0xA2
-#define LDX_DP 0xA6
-#define LDX_ABS 0xAE
+#define LDX_BASE 0xA2
 
-#define LSR_ACC 0x4A
-#define LSR_ABS 0x4E
-#define LSR_DP 0x46
+#define LDY_BASE 0xA0
+
+#define LSR_BASE 0x42
+
+#define MVN 0x54
+
+#define MVP 0x44
 
 #define NOP 0xEA
 
 #define ORA_BASE 0x00
 
 #define PEA 0xF4
+
+#define PEI 0xD4
+
+#define PER 0x62
 
 #define PHA 0x48
 
@@ -134,6 +168,10 @@
 
 #define REP 0xC2
 
+#define ROL_BASE 0x22
+
+#define ROR_BASE 0x62
+
 #define RTI 0x40
 
 #define RTL 0x6B
@@ -154,9 +192,9 @@
 
 #define STP 0xDB
 
-#define STY_ABS 0x8C
-#define STY_DP 0x84
-#define STY_DP_INDEXED_X 0x94
+#define STX_BASE 0x86
+
+#define STY_BASE 0x84
 
 #define STZ_ABS 0x9C
 #define STZ_DP 0x64
@@ -171,7 +209,11 @@
 
 #define TDA 0x7B
 
+#define TRB_BASE 0x10
+
 #define TSA 0x3B
+
+#define TSB_BASE 0x00
 
 #define TSX 0xBA
 
@@ -214,6 +256,15 @@ Status jump_out_of_bounds(Line* line) {
   else
     return error("destination must be within same bank as jump");
 }
+
+Status relative_addr_out_of_bounds(Line* line) {
+  if(line->expr1->type == SYMBOL)
+    return error("relative address %s must be within same bank as instruction",
+                 line->expr1->e.sym);  
+  else
+    return error("relative address must be within same bank as instruction");
+}
+
 
 static int immediate(int operand, Addressing_modifier mod, int sixteen) {
   if(sixteen) {
@@ -323,6 +374,7 @@ static Status primary(Line* line, int base, int sixteen_bit) {
     break;
   case INDIRECT:
   case INDIRECT_LONG:
+  case INDEXED_INDIRECT_X:
   case INDIRECT_INDEXED_Y:
   case INDIRECT_LONG_INDEXED_Y:
   case SR_INDIRECT_INDEXED:
@@ -352,6 +404,224 @@ static Status primary(Line* line, int base, int sixteen_bit) {
   default:
     return invalid_operand(line);
   }
+
+  return OK;
+}
+
+Status group2(Line* line, int base) {
+  int operand;
+
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else {
+      switch(line->addr_mode) {
+      case ACCUMULATOR:
+        line->byte_size = 1;
+        return OK;
+      case ABSOLUTE:
+      case ABSOLUTE_INDEXED_X:
+        line->byte_size = 3;
+        return OK;
+      default: return invalid_operand(line);
+      }
+    }
+  }
+
+  switch(line->addr_mode) {
+  case ACCUMULATOR:
+    line->byte_size = 1;
+    switch(base) {
+    case INC_BASE: line->bytes[0] = INC_ACC; break;
+    case DEC_BASE: line->bytes[0] = DEC_ACC; break;
+    case ASL_BASE:
+    case LSR_BASE:
+    case ROL_BASE:
+      line->bytes[0] = base | (G2_ACC << 2);
+      break;
+   default: return invalid_operand(line);
+   }
+   break;
+  case ABSOLUTE:
+    if(operand <= 0xFF) {
+      line->byte_size = 2;
+      line->bytes[0] = base | (G2_DP << 2);
+    }
+    else if(operand <= 0xFFFF) {
+      line->byte_size = 3;
+      line->bytes[0] = base | (G2_ABS << 2);
+    }
+    else
+      return operand_too_large(operand);
+    break;
+  case ABSOLUTE_INDEXED_X:
+  case ABSOLUTE_INDEXED_Y:
+    if(line->addr_mode == ABSOLUTE_INDEXED_Y && base != STX_BASE)
+      return invalid_operand(line);
+    if(line->addr_mode == ABSOLUTE_INDEXED_X && base == STX_BASE)
+      return invalid_operand(line);
+
+    if(operand <= 0xFF) {
+      line->byte_size = 2;
+      line->bytes[0] = base | (G2_DP_INDEXED << 2);
+    }
+    else if(operand <= 0xFFFF) {
+      line->byte_size = 3;
+      line->bytes[0] = base | (G2_ABS_INDEXED << 2);
+    }
+    else
+      return operand_too_large(operand);
+  default:
+    return invalid_operand(line);
+  }
+
+  line->bytes[1] = LO(operand);
+  line->bytes[2] = MID(operand);
+  return OK;
+}
+
+Status indexld(Line* line, int base) {
+  int operand;
+
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else {
+      switch(line->addr_mode) {
+      case IMMEDIATE: 
+        line->byte_size = index16 ? 3 : 2;
+        break;
+      case ABSOLUTE:
+        line->byte_size = 3;
+        break;
+      case ABSOLUTE_INDEXED_X:
+      case ABSOLUTE_INDEXED_Y:
+        if((line->addr_mode == ABSOLUTE_INDEXED_X && base == LDX_BASE) ||
+           (line->addr_mode == ABSOLUTE_INDEXED_Y && base == LDY_BASE))
+          return invalid_operand(line);
+        line->byte_size = 3;
+      default: return invalid_operand(line);
+      }
+      return OK;
+    }
+  }
+
+  switch(line->addr_mode) {
+  case IMMEDIATE:
+    operand = immediate(operand, line->modifier, index16);
+    line->byte_size = index16 ? 3 : 2;
+    line->bytes[0] = base + INDEX_LOAD_IMM;
+    break;
+  case ABSOLUTE:
+    if(operand <= 0xFF) {
+      line->byte_size = 2;
+      line->bytes[0] = base + INDEX_LOAD_DP;
+    }
+    else if(operand <= 0xFFFF) {
+      line->byte_size = 3;
+      line->bytes[0] = base + INDEX_LOAD_ABS;
+    }
+    else
+      return operand_too_large(operand);
+    break;
+  case ABSOLUTE_INDEXED_X:
+  case ABSOLUTE_INDEXED_Y:
+    if((line->addr_mode == ABSOLUTE_INDEXED_X && base == LDX_BASE) ||
+       (line->addr_mode == ABSOLUTE_INDEXED_Y && base == LDY_BASE))
+      return invalid_operand(line);
+    if(operand <= 0xFF) {
+      line->byte_size = 2;
+      line->bytes[0] = base + INDEX_LOAD_DP_INDEXED;
+    }
+    else if(operand <= 0xFFFF) {
+      line->byte_size = 3;
+      line->bytes[0] = base + INDEX_LOAD_ABS_INDEXED;
+    }
+    else
+      return operand_too_large(operand);
+  default:
+    return invalid_operand(line);
+  }
+
+  line->bytes[1] = LO(operand);
+  line->bytes[2] = MID(operand);
+  return OK;
+}
+
+Status indexcmp(Line* line, int base) {
+  int operand;
+
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else {
+      switch(line->addr_mode) {
+      case IMMEDIATE:
+        line->byte_size = index16 ? 3 : 2;
+        return OK;
+      case ABSOLUTE:
+        line->byte_size = 3;
+        return OK;
+      default: return invalid_operand(line);
+      }
+    }
+  }
+
+  switch(line->addr_mode) {
+  case IMMEDIATE:
+    operand = immediate(operand, line->modifier, 0);
+    if(operand > 0xFFFF || (!index16 && operand > 0xFF))
+      return operand_too_large(operand);
+    line->byte_size = index16 ? 3 : 2;
+    line->bytes[0] = base + INDEX_CMP_IMM;
+    break;
+  case ABSOLUTE:
+    if(operand <= 0xFF) {
+      line->byte_size = 2;
+      line->bytes[0] = base + INDEX_CMP_DP;
+    }
+    else if(operand <= 0xFFFF) {
+      line->byte_size = 3;
+      line->bytes[0] = base + INDEX_CMP_ABS;
+    }
+    else
+      return operand_too_large(operand);
+    break;
+  default: return invalid_operand(line);
+  }
+
+  line->bytes[1] = LO(operand);
+  line->bytes[2] = MID(operand);
+  return OK;
+}
+
+Status testbits(Line* line, int base) {
+  int operand;
+
+   if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else {
+      line->byte_size = 3;
+      return OK;
+    }
+  }
+
+  if(line->addr_mode != ABSOLUTE)
+    return invalid_operand(line);
+  if(operand <= 0xFF) {
+    line->bytes[0] = base + TEST_DP;
+    line->byte_size = 2;
+  }
+  if(operand <= 0xFFFF) {
+    line->bytes[0] = base + TEST_ABS;
+    line->byte_size = 3;
+  }
+  else
+    return operand_too_large(operand);
+
+  line->bytes[1] = LO(operand);
+  line->bytes[2] = MID(operand);
 
   return OK;
 }
@@ -396,13 +666,60 @@ Status branch(Line* line, int op) {
   return OK;
 }
 
-Status adc(Line* line) {
-  return primary(line, ADC_BASE, acc16);
+Status move(Line* line, int op) {
+  int op1;
+  int op2;
+
+  line->byte_size = 3;
+  if(line->addr_mode != MOVE)
+    return invalid_operand(line);
+  if(eval(line->expr1, &op1) != OK ||
+     eval(line->expr2, &op2) != OK) {
+    if(pass)
+      return ERROR;
+    else
+      return OK;
+  }
+
+  if(op1 > 0xFFFFFF)
+    return operand_too_large(op1);
+  if(op2 > 0xFFFFFF)
+    return operand_too_large(op2);
+
+  line->bytes[0] = op;
+  line->bytes[1] = HI(op2);
+  line->bytes[2] = HI(op1);
+
+  return OK;
 }
 
-Status and(Line* line) {
-  return primary(line, AND_BASE, acc16);
+Status constant(Line* line, int op) {
+  int operand;
+
+  line->byte_size = 2;
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else
+      return OK;
+  }
+
+  switch(line->addr_mode) {
+  case IMMEDIATE:
+    operand = immediate(operand, line->modifier, 0);
+    if(operand > 0xFF)
+      return operand_too_large(operand);
+    line->bytes[0] = op;
+    line->bytes[1] = LO(operand);
+    break;
+  default: return invalid_operand(line);
+  }
+
+  return OK;
 }
+
+Status adc(Line* line) { return primary(line, ADC_BASE, acc16); }
+Status and(Line* line) { return primary(line, AND_BASE, acc16); }
 
 Status ascii(Line* line) {
   if(line->addr_mode != STRING)
@@ -413,44 +730,7 @@ Status ascii(Line* line) {
   return OK;
 }
 
-Status asl(Line* line) {
-  int operand;
-
-  if(eval(line->expr1, &operand) != OK) {
-    if(pass)
-      return ERROR;
-    else {
-      line->byte_size = 3;
-      return OK;
-    }
-  }
-
-  switch(line->addr_mode) {
-  case ACCUMULATOR:
-    line->byte_size = 1;
-    line->bytes[0] = ASL_ACC;
-    break;
-  case ABSOLUTE:
-    if(operand <= 0xFF) {
-      line->byte_size = 2;
-      line->bytes[0] = ASL_DP;
-    }
-    else if(operand <= 0xFFFF) {
-      line->byte_size = 3;
-      line->bytes[0] = ASL_ABS;
-    }
-    else
-      return operand_too_large(operand);
-    line->bytes[1] = LO(operand);
-    line->bytes[2] = MID(operand);
-    break;
-  default:
-    return invalid_operand(line);
-  }
-
-  return OK;
-}
-
+Status asl(Line* line) { return group2(line, ASL_BASE); }
 Status bcc(Line* line) { return branch(line, BCC); }
 Status bcs(Line* line) { return branch(line, BCS); }
 Status beq(Line* line) { return branch(line, BEQ); }
@@ -508,6 +788,35 @@ Status bmi(Line* line) { return branch(line, BMI); }
 Status bne(Line* line) { return branch(line, BNE); }
 Status bpl(Line* line) { return branch(line, BPL); }
 Status bra(Line* line) { return branch(line, BRA); }
+Status brk(Line* line) { return constant(line, BRK); }
+
+Status brl(Line* line) {
+  int operand;
+  char dest;
+
+  line->byte_size = 3;
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else
+      return OK;
+  }
+
+  switch(line->addr_mode) {
+  case ABSOLUTE:
+    if(operand - pc - 3 >= 32768 || operand - pc - 8 < -32768)
+      return branch_out_of_bounds(line);
+    dest = (char)(operand - pc - 3);
+    line->bytes[0] = BRL;;
+    line->bytes[1] = LO(dest);
+    line->bytes[1] = MID(dest);
+    break;
+  default: return invalid_operand(line);
+  }
+
+  return OK;
+}
+
 Status bvc(Line* line) { return branch(line, BVC); }
 Status bvs(Line* line) { return branch(line, BVS); }
 Status clc(Line* line) { return implicit(line, CLC); }
@@ -515,6 +824,9 @@ Status cld(Line* line) { return implicit(line, CLD); }
 Status cli(Line* line) { return implicit(line, CLI); }
 Status clv(Line* line) { return implicit(line, CLV); }
 Status cmp(Line* line) { return primary(line, CMP_BASE, acc16); }
+Status cop(Line* line) { return constant(line, COP); }
+Status cpx(Line* line) { return indexcmp(line, CPX_BASE); }
+Status cpy(Line* line) { return indexcmp(line, CPY_BASE); }
 
 Status db(Line* line) {
   int operand;
@@ -561,44 +873,7 @@ Status dw(Line* line) {
   return OK;
 }
 
-Status dec(Line* line) {
-  int operand;
-
-  if(eval(line->expr1, &operand) != OK) {
-    if(pass)
-      return ERROR;
-    else {
-      line->byte_size = 3;
-      return OK;
-    }
-  }
-
-  switch(line->addr_mode) {
-  case ACCUMULATOR:
-    line->byte_size = 1;
-    line->bytes[0] = DEC_ACC;
-    break;
-  case ABSOLUTE:
-    if(operand <= 0xFF) {
-      line->byte_size = 2;
-      line->bytes[0] = DEC_DP;
-    }
-    else if(operand <= 0xFFFF) {
-      line->byte_size = 3;
-      line->bytes[0] = DEC_ABS;
-    }
-    else
-      return operand_too_large(operand);
-    line->bytes[1] = LO(operand);
-    line->bytes[2] = MID(operand);
-    break;
-  default:
-    return invalid_operand(line);
-  }
-
-  return OK;
-}
-
+Status dec(Line* line) { return group2(line, DEC_BASE); }
 Status dex(Line* line) { return implicit(line, DEX); }
 Status dey(Line* line) { return implicit(line, DEY); }
 Status eor(Line* line) { return primary(line, EOR_BASE, acc16); }
@@ -624,44 +899,7 @@ Status equ(Line* line) {
     return invalid_operand(line);
 }
 
-Status inc(Line* line) {
-  int operand;
-
-  if(eval(line->expr1, &operand) != OK) {
-    if(pass)
-      return ERROR;
-    else {
-      line->byte_size = 3;
-      return OK;
-    }
-  }
-
-  switch(line->addr_mode) {
-  case ACCUMULATOR:
-    line->byte_size = 1;
-    line->bytes[0] = INC_ACC;
-    break;
-  case ABSOLUTE:
-    if(operand <= 0xFF) {
-      line->byte_size = 2;
-      line->bytes[0] = INC_DP;
-    }
-    else if(operand <= 0xFFFF) {
-      line->byte_size = 3;
-      line->bytes[0] = INC_ABS;
-    }
-    else
-      return operand_too_large(operand);
-    line->bytes[1] = LO(operand);
-    line->bytes[2] = MID(operand);
-    break;
-  default:
-    return invalid_operand(line);
-  }
-
-  return OK;
-}
-
+Status inc(Line* line) { return group2(line, INC_BASE); }
 Status inx(Line* line) { return implicit(line, INX); }
 Status iny(Line* line) { return implicit(line, INY); }
 
@@ -679,9 +917,56 @@ Status jmp(Line* line) {
 
   switch(line->addr_mode) {
   case ABSOLUTE:
+  case INDIRECT:
+  case INDEXED_INDIRECT_X:
     if(HI(operand) != HI(pc))
       return jump_out_of_bounds(line);
-    line->bytes[0] = JMP_ABS;
+    switch(line->addr_mode) {
+    case ABSOLUTE: line->bytes[0] = JMP_ABS; break;
+    case INDIRECT: line->bytes[0] = JMP_INDIRECT; break;
+    case INDEXED_INDIRECT_X: line->bytes[0] = JMP_INDEXED_INDIRECT;
+    default:;
+    }
+    line->bytes[1] = LO(operand);
+    line->bytes[2] = MID(operand);
+    break;
+  default: return invalid_operand(line);
+  }
+
+  return OK;
+}
+
+Status jml(Line* line) {
+  int operand;
+
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else {
+      switch(line->addr_mode) {
+      case ABSOLUTE: line->byte_size = 4;
+      case INDIRECT_LONG: line->byte_size = 3;
+      default: invalid_operand(line);
+      }
+      return OK;
+    }
+  }
+
+  switch(line->addr_mode) {
+  case ABSOLUTE:
+    line->byte_size = 4;
+    if(operand > 0xFFFFFF)
+      return operand_too_large(operand);
+    line->bytes[0] = JML_ABS;
+    line->bytes[1] = LO(operand);
+    line->bytes[2] = MID(operand);
+    line->bytes[3] = HI(operand);
+    break;
+  case INDIRECT_LONG:
+    line->byte_size = 3;
+    if(operand > 0xFFFF)
+      return operand_too_large(operand);
+    line->bytes[0] = JML_INDIRECT;
     line->bytes[1] = LO(operand);
     line->bytes[2] = MID(operand);
     break;
@@ -751,54 +1036,8 @@ Status lda(Line* line) {
   return primary(line, LDA_BASE, acc16);
 }
 
-Status ldx(Line* line) {
-  int operand;
-
-  if(eval(line->expr1, &operand) != OK) {
-    if(pass)
-      return ERROR;
-    else {
-      switch(line->addr_mode) {
-      case IMMEDIATE: 
-        line->byte_size = index16 ? 3 : 2;
-        break;
-      case ABSOLUTE:
-        line->byte_size = 3;
-        break;
-      default: return invalid_operand(line);
-      }
-      return OK;
-    }
-  }
-
-  switch(line->addr_mode) {
-  case IMMEDIATE:
-    operand = immediate(operand, line->modifier, index16);
-    line->byte_size = index16 ? 3 : 2;
-    line->bytes[0] = LDX_IMM;
-    line->bytes[1] = LO(operand);
-    line->bytes[2] = MID(operand);
-    break;
-  case ABSOLUTE:
-    if(operand <= 0xFF) {
-      line->byte_size = 2;
-      line->bytes[0] = LDX_DP;
-    }
-    else if(operand <= 0xFFFF) {
-      line->byte_size = 3;
-      line->bytes[0] = LDX_ABS;
-    }
-    else
-      return operand_too_large(operand);
-    line->bytes[1] = LO(operand);
-    line->bytes[2] = MID(operand);
-    break;
-  default:
-    return invalid_operand(line);
-  }
-
-  return OK;
-}
+Status ldx(Line* line) { return indexld(line, LDX_BASE); }
+Status ldy(Line* line) { return indexld(line, LDY_BASE); }
 
 Status longa(Line* line) {
   if(line->addr_mode != ABSOLUTE && line->expr1->type != SYMBOL)
@@ -828,45 +1067,9 @@ Status longi(Line* line) {
   return OK;
 }
 
-
-Status lsr(Line* line) {
-  int operand;
-
-  if(eval(line->expr1, &operand) != OK) {
-    if(pass)
-      return ERROR;
-    else {
-      line->byte_size = 3;
-      return OK;
-    }
-  }
-
-  switch(line->addr_mode) {
-  case ACCUMULATOR:
-    line->byte_size = 1;
-    line->bytes[0] = LSR_ACC;
-    break;
-  case ABSOLUTE:
-    if(operand <= 0xFF) {
-      line->byte_size = 2;
-      line->bytes[0] = LSR_DP;
-    }
-    else if(operand <= 0xFFFF) {
-      line->byte_size = 3;
-      line->bytes[0] = LSR_ABS;
-    }
-    else
-      return operand_too_large(operand);
-    line->bytes[1] = LO(operand);
-    line->bytes[2] = MID(operand);
-    break;
-  default:
-    return invalid_operand(line);
-  }
-
-  return OK;
-}
-
+Status lsr(Line* line) { return group2(line, LSR_BASE); }
+Status mvn(Line* line) { return move(line, MVN); }
+Status mvp(Line* line) { return move(line, MVP); }
 Status nop(Line* line) { return implicit(line, NOP); }
 Status ora(Line* line) { return primary(line, ORA_BASE, acc16); }
 
@@ -934,6 +1137,51 @@ Status pea(Line* line) {
   return OK;
 }
 
+Status pei(Line* line) {
+  int operand;
+
+  line->byte_size = 2;
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else
+      return OK;
+  }
+
+  if(line->addr_mode != INDIRECT)
+    return invalid_operand(line);
+  if(operand > 0xFF)
+    return operand_too_large(operand);
+
+  line->bytes[0] = PEI;
+  line->bytes[1] = LO(operand);
+  return OK;
+}
+
+Status per(Line* line) {
+  int operand;
+  int displace;
+
+  line->byte_size = 3;
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else
+      return OK;
+  }
+
+  if(HI(pc) != HI(operand))
+    return relative_addr_out_of_bounds(line);
+
+  displace = operand - pc;
+
+  line->bytes[0] = PER;
+  line->bytes[1] = MID(displace);
+  line->bytes[2] = LO(displace);
+
+  return OK;
+}
+
 Status pha(Line* line) { return implicit(line, PHA); }
 Status phb(Line* line) { return implicit(line, PHB); }
 Status phd(Line* line) { return implicit(line, PHD); }
@@ -947,32 +1195,9 @@ Status pld(Line* line) { return implicit(line, PLD); }
 Status plp(Line* line) { return implicit(line, PLP); }
 Status plx(Line* line) { return implicit(line, PLX); }
 Status ply(Line* line) { return implicit(line, PLY); }
-
-Status rep(Line* line) {
-  int operand;
-
-  line->byte_size = 2;
-  if(eval(line->expr1, &operand) != OK) {
-    if(pass)
-      return ERROR;
-    else
-      return OK;
-  }
-
-  switch(line->addr_mode) {
-  case IMMEDIATE:
-    operand = immediate(operand, line->modifier, 0);
-    if(operand > 0xFF)
-      return operand_too_large(operand);
-    line->bytes[0] = REP;
-    line->bytes[1] = LO(operand);
-    break;
-  default: return invalid_operand(line);
-  }
-
-  return OK;
-}
-
+Status rep(Line* line) { return constant(line, REP); }
+Status rol(Line* line) { return group2(line, ROL_BASE); }
+Status ror(Line* line) { return group2(line, ROR_BASE); }
 Status rti(Line* line) { return implicit(line, RTI); }
 Status rtl(Line* line) { return implicit(line, RTL); }
 Status rts(Line* line) { return implicit(line, RTS); }
@@ -980,78 +1205,11 @@ Status sbc(Line* line) { return primary(line, SBC_BASE, acc16); }
 Status sec(Line* line) { return implicit(line, SEC); }
 Status sed(Line* line) { return implicit(line, SED); }
 Status sei(Line* line) { return implicit(line, SEI); }
-
-Status sep(Line* line) {
-  int operand;
-
-  line->byte_size = 2;
-  if(eval(line->expr1, &operand) != OK) {
-    if(pass)
-      return ERROR;
-    else
-      return OK;
-  }
-
-  switch(line->addr_mode) {
-  case IMMEDIATE:
-    operand = immediate(operand, line->modifier, 0);
-    if(operand > 0xFF)
-      return operand_too_large(operand);
-    line->bytes[0] = SEP;
-    line->bytes[1] = LO(operand);
-    break;
-  default: return invalid_operand(line);
-  }
-
-  return OK;
-}
-
+Status sep(Line* line) { return constant(line, SEP); }
 Status sta(Line* line) { return primary(line, STA_BASE, 0); }
 Status stp(Line* line) { return implicit(line, STP); }
-
-Status sty(Line* line) {
-  int operand;
-
-  if(eval(line->expr1, &operand) != OK) {
-    if(pass)
-      return ERROR;
-    else
-      switch(line->addr_mode) {
-      case ABSOLUTE:
-        line->byte_size = 3;
-        return OK;
-      case ABSOLUTE_INDEXED_X:
-        line->byte_size = 2;
-        return OK;
-      default: return invalid_operand(line);
-      }
-  }
-
-  switch(line->addr_mode) {
-  case ABSOLUTE:
-    if(operand <= 0xFF) {
-      line->byte_size = 2;
-      line->bytes[0] = STY_DP;
-    }
-    else if(operand <= 0xFFFF) {
-      line->byte_size = 3;
-      line->bytes[0] = STY_ABS;
-    }
-    else return operand_too_large(operand);
-    line->bytes[1] = LO(operand);
-    line->bytes[2] = MID(operand);
-    break;
-  case ABSOLUTE_INDEXED_X:
-    if(operand > 0xFF) return operand_too_large(operand);
-    line->byte_size = 2;
-    line->bytes[0] = STY_DP_INDEXED_X;
-    line->bytes[1] = LO(operand);
-    break;
-  default: return invalid_operand(line);
-  }
-
-  return OK;
-}
+Status stx(Line* line) { return group2(line, STX_BASE); }
+Status sty(Line* line) { return group2(line, STY_BASE); }
 
 Status stz(Line* line) {
   int operand;
@@ -1092,7 +1250,9 @@ Status tas(Line* line) { return implicit(line, TAS); }
 Status tax(Line* line) { return implicit(line, TAX); }
 Status tay(Line* line) { return implicit(line, TAY); }
 Status tda(Line* line) { return implicit(line, TDA); }
+Status trb(Line* line) { return testbits(line, TRB_BASE); }
 Status tsa(Line* line) { return implicit(line, TSA); }
+Status tsb(Line* line) { return testbits(line, TSB_BASE); }
 Status tsx(Line* line) { return implicit(line, TSX); }
 Status txa(Line* line) { return implicit(line, TXA); }
 Status txs(Line* line) { return implicit(line, TXS); }

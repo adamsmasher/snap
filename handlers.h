@@ -38,6 +38,7 @@ Status equ(Line* line);
 Status inc(Line* line);
 Status inx(Line* line);
 Status iny(Line* line);
+Status jml(Line* line);
 Status jmp(Line* line);
 Status jsl(Line* line);
 Status jsr(Line* line);
