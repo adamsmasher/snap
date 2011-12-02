@@ -30,6 +30,7 @@ void init_instructions() {
     {"bcc", bcc},
     {"bcs", bcs},
     {"beq", beq},
+    {"bge", bcs},
     {"bgt", bcs},
     {"bit", bit},
     {"blt", bcc},
