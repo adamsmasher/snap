@@ -1,10 +1,18 @@
 snap (Super Nintendo Assembling Program) is a multi-pass 65816 assembler.
 
+USAGE:
+snap [-s <sym-file>] <in-file> <out-file>
+
+(<sym-file> is where the assembler will dump its symbol table in the end.
+ This way you can easily determine what address a procedure is located at,
+ so you can add breakpoints or whatever)
+
 Expression parsing isn't done yet. It may be, one day. As need basis.
 
 Macros are not implemented. They may never be.
 
 Syntax generally follows that laid out in the WDC 65816 docs and datasheets.
+
 
 TODO:
 -absolute modifiers
@@ -17,13 +25,18 @@ WHAT'S DONE:
 -all instructions/addressing modes
 -very very basic math/expression parsing
 -multipass optimization
+-memmap output - very handy!
 
 ; comments look like this
 
 LabelsLookLikeThis:
+  JMP LabelsLookLikeThis
 .localLabelsLookLikeThis:
+  beq .localLabelsLookLikeThis
 
 DefinesLookLikeThis: equ $20
+
+LDA #DefinesLookLikeThis
 
 INCSRC "defines.asm"
 
@@ -32,9 +45,9 @@ ORG $8000 ; doesn't actually write any data, just changes the current PC
 ; the usual 65816 stuff
 XCE
 CLC
-lda #$12
+lda #$12       ; case insensitivity
 sta $2100
-LdA #%10010100
+LdA #%10010100 ; case insensitivity!
 STA $00
 LONGA ON
 LONGA OFF
