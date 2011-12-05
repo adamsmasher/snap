@@ -67,6 +67,14 @@ char* intern_symbol(char* sym) {
   }
 }
 
+void dump_symbols(FILE* fp) {
+  int i;
+  for(i = 0; i < SYMBOL_BUCKETS; i++) {
+    if(symbol_table[i].name && symbol_table[i].defined)
+      fprintf(fp, "%s: $%X\n", symbol_table[i].name, symbol_table[i].val);
+  }
+}
+
 int lookup_symbol(char* sym) {
   char* name_copy;
   int i;

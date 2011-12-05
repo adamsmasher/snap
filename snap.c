@@ -9,9 +9,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
+#include <unistd.h>
 
 int usage() {
-  fprintf(stderr, "Usage: snap <in-file> <out-file>\n");
+  fprintf(stderr, "Usage: snap [-s <sym-file>] <in-file> <out-file>\n");
   return -1;
 }
 
@@ -32,16 +33,29 @@ void write_assembled(FILE* fp);
 
 int main(int argc, char** argv) {
   FILE* fp;
+  char* in_file;
+  char* out_file;
+  char* sym_file;
+  int ch;
 
-  /* we require an infile and an outfile */
-  if(argc != 3)
+  while((ch = getopt(argc, argv, "s:")) != -1) {
+    switch(ch) {
+    case 's': sym_file = optarg; break;
+    default: return usage();
+    }
+  }
+
+  if(argc - optind != 2)
     return usage();
+
+  in_file = argv[optind];
+  out_file = argv[optind+1];
 
   /* initialization */
   init_instructions();
   init_symtable();
 
-  if(load_file(argv[1]) != OK)
+  if(load_file(in_file) != OK)
     return -1;
 
   /* assemble it. each line stores its own assembly code */
@@ -49,13 +63,26 @@ int main(int argc, char** argv) {
     return -1;
 
   /* write the assembled code out */
-  fp = fopen(argv[2], "wb");
+  fp = fopen(out_file, "wb");
   if(!fp) {
     fprintf(stderr, "Error: could not open file %s for writing\n", argv[2]);
     return -1;
   }
   write_assembled(fp);
   fclose(fp);
+
+  if(sym_file) {
+    fp = fopen(sym_file, "w");
+    if(!fp) {
+      fprintf(stderr,
+              "Error: could not open file %s for writing symbol info to\n",
+              sym_file);
+      return -1;
+    }
+    dump_symbols(fp);
+    fclose(fp);
+  }
+
   return 0;
 }
 
