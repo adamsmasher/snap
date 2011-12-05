@@ -58,6 +58,7 @@ void init_instructions() {
     {"eor", eor},
     {"equ", equ},
     {"inc", inc},
+    {"incbin", incbin},
     {"inx", inx},
     {"iny", iny},
     {"jml", jml},

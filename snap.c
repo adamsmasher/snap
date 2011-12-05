@@ -166,6 +166,18 @@ void write_assembled(FILE* fp) {
       }
     else if(lp->instruction && strcasecmp(lp->instruction, "ascii") == 0)
       fwrite(lp->expr1->e.str, 1, lp->byte_size, fp);
+    else if(lp->instruction && strcasecmp(lp->instruction, "incbin") == 0) {
+      FILE* fp2;
+      int c;
+      fp2 = fopen(lp->expr1->e.str, "rb");
+      if(!fp2) {
+        error("cannot open included file %s", lp->expr1->e.str);
+        return;
+      }
+      while((c = fgetc(fp2)) != EOF)
+        fputc(c, fp);
+      fclose(fp2);
+    }
     else
       fwrite(lp->bytes, 1, lp->byte_size, fp);
     lp = lp->next;

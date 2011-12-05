@@ -910,6 +910,25 @@ Status equ(Line* line) {
 }
 
 Status inc(Line* line) { return group2(line, INC_BASE); }
+
+Status incbin(Line* line) {
+  FILE* fp;
+
+  if(line->addr_mode != STRING)
+    return invalid_operand(line);
+
+  fp = fopen(line->expr1->e.str, "rb");
+  if(!fp)
+    return error("cannot open included file %s", line->expr1->e.str);
+
+  fseek(fp, 0L, SEEK_END);
+  line->byte_size = ftell(fp);
+
+  fclose(fp);
+
+  return OK;
+}
+
 Status inx(Line* line) { return implicit(line, INX); }
 Status iny(Line* line) { return implicit(line, INY); }
 

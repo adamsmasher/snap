@@ -36,6 +36,7 @@ Status dex(Line* line);
 Status eor(Line* line);
 Status equ(Line* line);
 Status inc(Line* line);
+Status incbin(Line* line);
 Status inx(Line* line);
 Status iny(Line* line);
 Status jml(Line* line);
