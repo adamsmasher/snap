@@ -1,15 +1,14 @@
 snap (Super Nintendo Assembling Program) is a multi-pass 65816 assembler.
 
+snap is GPL'd software.
+If you want to change it or improve it, please do so for everyone. Thanks!
+
 USAGE:
 snap [-s <sym-file>] <in-file> <out-file>
 
 (<sym-file> is where the assembler will dump its symbol table in the end.
  This way you can easily determine what address a procedure is located at,
  so you can add breakpoints or whatever)
-
-Expression parsing isn't done yet. It may be, one day. As need basis.
-
-Macros are not implemented. They may never be.
 
 Syntax generally follows that laid out in the WDC 65816 docs and datasheets.
 
@@ -22,7 +21,7 @@ COMPILING:
 
 TODO:
 -absolute modifiers
--more math/expression parsing
+-more math/expression parsing - right now snap only supports + and -
 -a bunch more directives
 -more features for the existing directives
 -riddled with bugs I am sure
@@ -58,6 +57,8 @@ lda #$12       ; case insensitivity
 sta $2100
 LdA #%10010100 ; case insensitivity!
 STA $00
+STA $20+5     ; maths!
+STA $20-5
 LONGA ON
 LONGA OFF
 LONGI ON
