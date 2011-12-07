@@ -442,9 +442,11 @@ static Status read_list(char** lp, Line* line) {
     if(**lp) {
       if(**lp != ',')
         return expected(',', **lp);
+      (*lp)++;
       while(**lp && isspace(**lp)) (*lp)++;
     }
   }
+  end->next = NULL;
 
   line->expr1 = malloc(sizeof(Expr));
   line->expr1->type = NUMBER;

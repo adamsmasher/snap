@@ -845,46 +845,86 @@ Status cpy(Line* line) { return indexcmp(line, CPY_BASE); }
 Status db(Line* line) {
   int operand;
 
-  line->byte_size = 1;
-  if(eval(line->expr1, &operand) != OK) {
-    if(pass)
-      return ERROR;
-    else
-      return OK;
+  if(line->addr_mode == ABSOLUTE) {
+    line->byte_size = 1;
+    if(eval(line->expr1, &operand) != OK) {
+      if(pass)
+        return ERROR;
+      else
+        return OK;
+    }
+    if(operand > 0xFF)
+      return operand_too_large(operand);
+    
+    line->bytes[0] = LO(operand);
+  
+    return OK;
   }
-
-  if(line->addr_mode != ABSOLUTE)
+  else if(line->addr_mode == LIST) {
+    Expr* e = line->expr2;
+    line->byte_size = line->expr1->e.num;
+    /* attempt to eval all of the words */
+    while(e) {
+      if(eval(e, &operand) != OK) {
+        if(pass)
+          return ERROR;
+        else
+          return OK;
+      }
+      if(operand > 0xFF)
+        return operand_too_large(operand);
+      e->type = NUMBER;
+      e->e.num = operand;
+      e = e->next;
+    }
+    /* leave it to the final assembler to write them */
+    return OK;
+  }
+  else
     return invalid_operand(line);
-
-  if(operand > 0xFF)
-    return operand_too_large(operand);
-
-  line->bytes[0] = LO(operand);
-
-  return OK;
 }
 
 Status dw(Line* line) {
   int operand;
 
-  line->byte_size = 2;
-  if(eval(line->expr1, &operand) != OK) {
-    if(pass)
-      return ERROR;
-    else
-      return OK;
+  if(line->addr_mode == ABSOLUTE) {
+    line->byte_size = 2;
+    if(eval(line->expr1, &operand) != OK) {
+      if(pass)
+        return ERROR;
+      else
+        return OK;
+    }
+    if(operand > 0xFFFF)
+      return operand_too_large(operand);
+    
+    line->bytes[0] = LO(operand);
+    line->bytes[1] = MID(operand);
+  
+    return OK;
   }
-
-  if(line->addr_mode != ABSOLUTE)
+  else if(line->addr_mode == LIST) {
+    Expr* e = line->expr2;
+    line->byte_size = line->expr1->e.num * 2;
+    /* attempt to eval all of the words */
+    while(e) {
+      if(eval(e, &operand) != OK) {
+        if(pass)
+          return ERROR;
+        else
+          return OK;
+      }
+      if(operand > 0xFFFF)
+        return operand_too_large(operand);
+      e->type = NUMBER;
+      e->e.num = operand;
+      e = e->next;
+    }
+    /* leave it to the final assembler to write them */
+    return OK;
+  }
+  else
     return invalid_operand(line);
-
-  if(operand > 0xFFFF)
-    return operand_too_large(operand);
-
-  line->bytes[0] = LO(operand);
-  line->bytes[1] = MID(operand);
-
-  return OK;
 }
 
 Status dec(Line* line) { return group2(line, DEC_BASE); }

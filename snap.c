@@ -159,24 +159,44 @@ Status assemble() {
 void write_assembled(FILE* fp) {
   Line* lp = first_line;
   while(lp) {
-    if(lp->instruction && strcasecmp(lp->instruction, "pad") == 0)
-      while(lp->byte_size) {
-        fputc(0, fp);
-        lp->byte_size--;
+    if(lp->instruction) {
+      if(strcasecmp(lp->instruction, "pad") == 0)
+        while(lp->byte_size) {
+          fputc(0, fp);
+          lp->byte_size--;
+        }
+      else if(strcasecmp(lp->instruction, "ascii") == 0)
+        fwrite(lp->expr1->e.str, 1, lp->byte_size, fp);
+      else if(strcasecmp(lp->instruction, "incbin") == 0) {
+        FILE* fp2;
+        int c;
+        fp2 = fopen(lp->expr1->e.str, "rb");
+        if(!fp2) {
+          error("cannot open included file %s", lp->expr1->e.str);
+          return;
+        }
+        while((c = fgetc(fp2)) != EOF)
+          fputc(c, fp);
+        fclose(fp2);
       }
-    else if(lp->instruction && strcasecmp(lp->instruction, "ascii") == 0)
-      fwrite(lp->expr1->e.str, 1, lp->byte_size, fp);
-    else if(lp->instruction && strcasecmp(lp->instruction, "incbin") == 0) {
-      FILE* fp2;
-      int c;
-      fp2 = fopen(lp->expr1->e.str, "rb");
-      if(!fp2) {
-        error("cannot open included file %s", lp->expr1->e.str);
-        return;
+      else if(lp->addr_mode == LIST && strcasecmp(lp->instruction, "db") == 0) 
+      {
+        Expr* e = lp->expr2;
+        while(e) {
+          fwrite(&e->e.num, 1, 1, fp);
+          e = e->next;
+        }
       }
-      while((c = fgetc(fp2)) != EOF)
-        fputc(c, fp);
-      fclose(fp2);
+      else if(lp->addr_mode == LIST && strcasecmp(lp->instruction, "dw") == 0) 
+      {
+        Expr* e = lp->expr2;
+        while(e) {
+          fwrite(&e->e.num, 1, 2, fp);
+          e = e->next;
+        }
+      }
+      else
+        fwrite(lp->bytes, 1, lp->byte_size, fp);
     }
     else
       fwrite(lp->bytes, 1, lp->byte_size, fp);
