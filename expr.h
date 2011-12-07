@@ -11,6 +11,7 @@ typedef struct Expr_t {
     char* sym;
     struct Expr_t* subexpr[2];
   } e;
+  struct Expr_t* next; /* for a list */
 } Expr;
 
 #endif

@@ -673,10 +673,14 @@ Status move(Line* line, int op) {
   int op2;
 
   line->byte_size = 3;
-  if(line->addr_mode != MOVE)
+  if(line->addr_mode != LIST)
     return invalid_operand(line);
-  if(eval(line->expr1, &op1) != OK ||
-     eval(line->expr2, &op2) != OK) {
+
+  if(line->expr1->e.num != 2)
+    return invalid_operand(line);
+
+  if(eval(line->expr2, &op1) != OK ||
+     eval(line->expr2->next, &op2) != OK) {
     if(pass)
       return ERROR;
     else

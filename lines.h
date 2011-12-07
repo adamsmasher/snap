@@ -9,7 +9,6 @@ typedef enum {ACCUMULATOR,
               ABSOLUTE,
               ABSOLUTE_INDEXED_X,
               ABSOLUTE_INDEXED_Y,
-              MOVE,
               INDIRECT,
               INDIRECT_INDEXED_Y,
               INDEXED_INDIRECT_X,
@@ -17,7 +16,8 @@ typedef enum {ACCUMULATOR,
               INDIRECT_LONG_INDEXED_Y,
               STACK_RELATIVE,
               SR_INDIRECT_INDEXED,
-              STRING
+              STRING,
+              LIST
 } Addressing_mode;
 
 typedef enum {NONE,

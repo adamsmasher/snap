@@ -18,6 +18,7 @@ static void strip_comment(char* line);
 static char* get_label(char* l, char** label);
 static char* get_instruction(char* l, char** instruction);
 static Status get_operand(char* lp, Line* l);
+static Status read_list(char** lp, Line* line);
 static Status read_expr(char** lp, Expr* expr);
 static Status read_atom(char** lp, Expr* expr);
 static Status read_dec(char** lp, int* n);
@@ -393,21 +394,19 @@ static Status get_operand(char* lp, Line* line) {
       line->addr_mode = ABSOLUTE;
     /* if a comma follows the expression, it might be:
      indexed: lda $01, X ; lda $01, Y ; lda $01, S
-     move: mvn $01, $02 */
+     list: db 0, 1, 2, 3... */
     else if(*lp == ',') {
       /* move past comma */
       lp++;
       while(*lp && isspace(*lp)) lp++;
-    
+ 
       switch(tolower(*lp)) {
       case 'x': line->addr_mode = ABSOLUTE_INDEXED_X; lp++; break;
       case 'y': line->addr_mode = ABSOLUTE_INDEXED_Y; lp++; break;
       case 's': line->addr_mode = STACK_RELATIVE; lp++; break;
       default: 
-        line->expr2 = malloc(sizeof(Expr));
-        if(read_expr(&lp, line->expr2) != OK)
+        if(read_list(&lp, line) != OK)
           return ERROR;
-        line->addr_mode = MOVE;
       }
     }
   /* anything else following the expression is unexpected, will be handled
@@ -420,6 +419,39 @@ static Status get_operand(char* lp, Line* line) {
     return error("unexpected %s", lp);
   return OK;
 }  
+
+/* helper function to read the tail of a list.
+   Assumes the head of the list is in line->expr1 
+   transforms the line into a LIST line */
+static Status read_list(char** lp, Line* line) {
+  int list_size = 1;
+  Expr* end;  
+
+  line->addr_mode = LIST;
+  line->expr2 = end = line->expr1;
+  while(**lp) {
+    list_size++;
+    end->next = malloc(sizeof(Expr));
+    end = end->next;
+    if(read_expr(lp, end) != OK)
+      return ERROR;
+    /* skip whitespace */
+    while(**lp && isspace(**lp)) (*lp)++;
+
+    /* expect either a comma or nothing */
+    if(**lp) {
+      if(**lp != ',')
+        return expected(',', **lp);
+      while(**lp && isspace(**lp)) (*lp)++;
+    }
+  }
+
+  line->expr1 = malloc(sizeof(Expr));
+  line->expr1->type = NUMBER;
+  line->expr1->e.num = list_size;
+
+  return OK;
+}
 
 static Status read_expr(char** lp, Expr* expr) {
   Expr* l;
