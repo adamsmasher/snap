@@ -40,6 +40,8 @@ LabelsLookLikeThis:
 .localLabelsLookLikeThis:
   beq .localLabelsLookLikeThis
 
+LabelsCanGoOnTheSameLine: bra LabelsCanGoOnTheSameLine
+
 DefinesLookLikeThis: equ $20
 
 LDA #DefinesLookLikeThis
@@ -72,4 +74,8 @@ PAD $FFD5
 DB $20
 PAD $FFFC
 DW Start
+
+MultiByteDefine1:
+DB 0,1,2,3,4,5,6
+MultiByteDefine2: DW 1,2,3,4,5,6
 
