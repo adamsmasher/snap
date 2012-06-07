@@ -13,11 +13,7 @@ snap [-s <sym-file>] <in-file> <out-file>
 Syntax generally follows that laid out in the WDC 65816 docs and datasheets.
 
 COMPILING:
-  just compiling all the C files and linking them together should do it.
-  One day I might write a makefile. 
-
-  gcc -ansi -Wall -g -c *.c
-  gcc -ansi -Wall -g *.o -o snap
+ run make. copy/install snap to your bin directory if that makes you happy.
 
 TODO:
 -absolute modifiers
@@ -25,7 +21,6 @@ TODO:
 -a bunch more directives
 -more features for the existing directives
 -riddled with bugs I am sure
--a makefile
 
 WHAT'S DONE:
 -all instructions/addressing modes
