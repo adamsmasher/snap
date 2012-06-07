@@ -456,28 +456,34 @@ static Status read_list(char** lp, Line* line) {
 }
 
 static Status read_expr(char** lp, Expr* expr) {
-  Expr* l;
-  l = malloc(sizeof(Expr));
-  if(read_atom(lp, l) != OK)
+  Expr *l;
+
+  if(read_atom(lp, expr) != OK)
     return ERROR;
 
   while(**lp && isspace(**lp)) (*lp)++;
 
-  if(**lp == '-' || **lp == '+') {
-    expr->e.subexpr[0] = l;
-    expr->e.subexpr[1] = malloc(sizeof(Expr));
+  while(**lp == '-' || **lp == '+') {
+    /* copy the current expression into the left */
+    l = malloc(sizeof(Expr));
+    *l = *expr;
+
+    /* make new expression */
     if(**lp == '-')
       expr->type = SUB;
     else if(**lp == '+')
       expr->type = ADD;
+
+    expr->e.subexpr[0] = l;
+    expr->e.subexpr[1] = malloc(sizeof(Expr));
     (*lp)++;
     while(**lp && isspace(**lp)) (*lp)++;
-    return read_expr(lp, expr->e.subexpr[1]);
+    if(read_atom(lp, expr->e.subexpr[1]) != OK)
+        return ERROR;
+    while(**lp && isspace(**lp)) (*lp)++;
   }
-  else {
-    *expr = *l;
-    return OK;
-  }
+
+  return OK;
 }
 
 static Status read_atom(char** lp, Expr* expr) {
