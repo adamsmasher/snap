@@ -6,6 +6,7 @@
 #include "lines.h"
 #include "snap.h"
 
+#include <string.h>
 #include <strings.h>
 
 #define PRIMARY_IMM 0x09
