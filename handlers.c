@@ -274,17 +274,17 @@ Status relative_addr_out_of_bounds(Line* line) {
 static int immediate(int operand, Addressing_modifier mod, int sixteen) {
   if(sixteen) {
     switch(mod) {
-    case IMMEDIATE_HI: return (operand && 0xFFFF00) >> 8;
-    case IMMEDIATE_MID: return operand && 0xFFFF;
-    case IMMEDIATE_LO: return operand && 0xFFFF;
+    case IMMEDIATE_HI: return (operand & 0xFFFF00) >> 8;
+    case IMMEDIATE_MID: return operand & 0xFFFF;
+    case IMMEDIATE_LO: return operand & 0xFFFF;
     default: return operand;
     }
   }
   else {
     switch(mod) {
-    case IMMEDIATE_HI: return (operand && 0xFF0000) >> 16;
-    case IMMEDIATE_MID: return (operand && 0x00FF00) >> 8;
-    case IMMEDIATE_LO: return operand && 0xFF;
+    case IMMEDIATE_HI: return (operand & 0xFF0000) >> 16;
+    case IMMEDIATE_MID: return (operand & 0x00FF00) >> 8;
+    case IMMEDIATE_LO: return operand & 0xFF;
     default: return operand;
     }
   }
