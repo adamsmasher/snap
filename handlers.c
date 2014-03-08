@@ -242,8 +242,8 @@
 #define MID(x) ((char)((x) >> 8))
 #define HI(x) ((char)((x) >> 16))
 
-Status operand_too_large(int operand) {
-  return error("operand %d too large", operand);
+Status operand_out_of_range(int operand) {
+  return error("operand %d out of range", operand);
 }
 
 Status branch_out_of_bounds(Line* line) {
@@ -332,7 +332,7 @@ static Status primary(Line* line, int base, int sixteen_bit) {
     line->bytes[0] = base + PRIMARY_IMM;
     if(sixteen_bit) line->bytes[2] = MID(operand);
     else if(operand > 0xFF)
-      return operand_too_large(operand);
+      return operand_out_of_range(operand);
     break;
   case ABSOLUTE:
   case ABSOLUTE_INDEXED_X:
@@ -362,12 +362,12 @@ static Status primary(Line* line, int base, int sixteen_bit) {
       }
     }
     else
-      return operand_too_large(operand);
+      return operand_out_of_range(operand);
     break;
   case ABSOLUTE_INDEXED_Y:
     line->byte_size = 3;
     if(operand > 0xFFFF)
-      return operand_too_large(operand);
+      return operand_out_of_range(operand);
     line->bytes[0] = base + PRIMARY_ABS_INDEXED_Y;
     break;
   case INDIRECT:
@@ -379,7 +379,7 @@ static Status primary(Line* line, int base, int sixteen_bit) {
   case STACK_RELATIVE:
     line->byte_size = 2;
     if(operand > 0xFF)
-      return operand_too_large(operand);
+      return operand_out_of_range(operand);
     switch(line->addr_mode) {
     case INDIRECT: line->bytes[0] = base + PRIMARY_DP_INDIRECT; break;
     case INDIRECT_LONG: line->bytes[0] = base + PRIMARY_DP_INDIRECT_LONG; break;
@@ -453,7 +453,7 @@ Status group2(Line* line, int base) {
       line->bytes[0] = base | (G2_ABS << 2);
     }
     else
-      return operand_too_large(operand);
+      return operand_out_of_range(operand);
     break;
   case ABSOLUTE_INDEXED_X:
   case ABSOLUTE_INDEXED_Y:
@@ -471,7 +471,7 @@ Status group2(Line* line, int base) {
       line->bytes[0] = base | (G2_ABS_INDEXED << 2);
     }
     else
-      return operand_too_large(operand);
+      return operand_out_of_range(operand);
     break;
   default:
     return invalid_operand(line);
@@ -524,7 +524,7 @@ Status indexld(Line* line, int base) {
       line->bytes[0] = base + INDEX_LOAD_ABS;
     }
     else
-      return operand_too_large(operand);
+      return operand_out_of_range(operand);
     break;
   case ABSOLUTE_INDEXED_X:
   case ABSOLUTE_INDEXED_Y:
@@ -540,7 +540,7 @@ Status indexld(Line* line, int base) {
       line->bytes[0] = base + INDEX_LOAD_ABS_INDEXED;
     }
     else
-      return operand_too_large(operand);
+      return operand_out_of_range(operand);
     break;
   default:
     return invalid_operand(line);
@@ -574,7 +574,7 @@ Status indexcmp(Line* line, int base) {
   case IMMEDIATE:
     operand = immediate(operand, line->modifier, 0);
     if(operand > 0xFFFF || (!index16 && operand > 0xFF))
-      return operand_too_large(operand);
+      return operand_out_of_range(operand);
     line->byte_size = index16 ? 3 : 2;
     line->bytes[0] = base + INDEX_CMP_IMM;
     break;
@@ -588,7 +588,7 @@ Status indexcmp(Line* line, int base) {
       line->bytes[0] = base + INDEX_CMP_ABS;
     }
     else
-      return operand_too_large(operand);
+      return operand_out_of_range(operand);
     break;
   default: return invalid_operand(line);
   }
@@ -621,7 +621,7 @@ Status testbits(Line* line, int base) {
     line->byte_size = 3;
   }
   else
-    return operand_too_large(operand);
+    return operand_out_of_range(operand);
 
   line->bytes[1] = LO(operand);
   line->bytes[2] = MID(operand);
@@ -689,9 +689,9 @@ Status move(Line* line, int op) {
   }
 
   if(op1 > 0xFFFFFF)
-    return operand_too_large(op1);
+    return operand_out_of_range(op1);
   if(op2 > 0xFFFFFF)
-    return operand_too_large(op2);
+    return operand_out_of_range(op2);
 
   line->bytes[0] = op;
   line->bytes[1] = HI(op2);
@@ -715,7 +715,7 @@ Status constant(Line* line, int op) {
   case IMMEDIATE:
     operand = immediate(operand, line->modifier, 0);
     if(operand > 0xFF)
-      return operand_too_large(operand);
+      return operand_out_of_range(operand);
     line->bytes[0] = op;
     line->bytes[1] = LO(operand);
     break;
@@ -788,7 +788,7 @@ Status bit(Line* line) {
       }
     }
     else
-      return operand_too_large(operand);
+      return operand_out_of_range(operand);
     break;
   default:
     return invalid_operand(line);
@@ -855,7 +855,7 @@ Status db(Line* line) {
         return OK;
     }
     if(operand > 0xFF)
-      return operand_too_large(operand);
+      return operand_out_of_range(operand);
     
     line->bytes[0] = LO(operand);
   
@@ -873,7 +873,7 @@ Status db(Line* line) {
           return OK;
       }
       if(operand > 0xFF)
-        return operand_too_large(operand);
+        return operand_out_of_range(operand);
       e->type = NUMBER;
       e->e.num = operand;
       e = e->next;
@@ -897,7 +897,7 @@ Status dw(Line* line) {
         return OK;
     }
     if(operand > 0xFFFF)
-      return operand_too_large(operand);
+      return operand_out_of_range(operand);
     
     line->bytes[0] = LO(operand);
     line->bytes[1] = MID(operand);
@@ -916,7 +916,7 @@ Status dw(Line* line) {
           return OK;
       }
       if(operand > 0xFFFF)
-        return operand_too_large(operand);
+        return operand_out_of_range(operand);
       e->type = NUMBER;
       e->e.num = operand;
       e = e->next;
@@ -1030,7 +1030,7 @@ Status jml(Line* line) {
   case ABSOLUTE:
     line->byte_size = 4;
     if(operand > 0xFFFFFF)
-      return operand_too_large(operand);
+      return operand_out_of_range(operand);
     line->bytes[0] = JML_ABS;
     line->bytes[1] = LO(operand);
     line->bytes[2] = MID(operand);
@@ -1039,7 +1039,7 @@ Status jml(Line* line) {
   case INDIRECT_LONG:
     line->byte_size = 3;
     if(operand > 0xFFFF)
-      return operand_too_large(operand);
+      return operand_out_of_range(operand);
     line->bytes[0] = JML_INDIRECT;
     line->bytes[1] = LO(operand);
     line->bytes[2] = MID(operand);
@@ -1065,7 +1065,7 @@ Status jsl(Line* line) {
   switch(line->addr_mode) {
   case ABSOLUTE:
     if(operand > 0xFFFFFF)
-      return operand_too_large(operand);
+      return operand_out_of_range(operand);
     line->bytes[0] = JSL;
     line->bytes[1] = LO(operand);
     line->bytes[2] = MID(operand);
@@ -1099,7 +1099,7 @@ Status jsr(Line* line) {
     break;
   case INDEXED_INDIRECT_X:
     if(operand > 0xFFFF)
-      return operand_too_large(operand);
+      return operand_out_of_range(operand);
     line->bytes[0] = JSR_ABS_INDEXED_INDIRECT;
     break;
   default: return invalid_operand(line);
@@ -1165,7 +1165,7 @@ Status org(Line* line) {
     if(operand <= 0xFFFFFF)
       pc = operand;
     else
-      return operand_too_large(operand);
+      return operand_out_of_range(operand);
     break;
   default:
     return invalid_operand(line);
@@ -1230,7 +1230,7 @@ Status pei(Line* line) {
   if(line->addr_mode != INDIRECT)
     return invalid_operand(line);
   if(operand > 0xFF)
-    return operand_too_large(operand);
+    return operand_out_of_range(operand);
 
   line->bytes[0] = PEI;
   line->bytes[1] = LO(operand);
@@ -1322,7 +1322,7 @@ Status stz(Line* line) {
       }
     }
     else
-      return operand_too_large(operand);
+      return operand_out_of_range(operand);
     line->bytes[1] = LO(operand);
     line->bytes[2] = MID(operand);
     break;
