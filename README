@@ -28,6 +28,18 @@ WHAT'S DONE:
 -multipass optimization
 -memmap output - very handy!
 
+It's very important that when you modify D or DBR you pass this
+info to the assember so that it resolves labels correctly.
+
+LDA #$80
+PHA
+PLD
+SETDBR #$80
+
+LDA #$0800
+TCD
+SETD #$0800
+
 ; comments look like this
 
 LabelsLookLikeThis:
