@@ -1334,6 +1334,30 @@ Status setd(Line* line) {
   return OK;
 }
 
+Status setdbr(Line* line) {
+  int operand;
+
+  if(line->addr_mode != IMMEDIATE)
+    return invalid_operand(line);
+
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else
+      return OK;
+  }
+  switch(line->modifier) {
+  case IMMEDIATE_HI: operand = (operand & 0xFF0000) >> 16; break;
+  case IMMEDIATE_MID: operand = (operand & 0x00FF00) >> 8; break;
+  case IMMEDIATE_LO: operand = operand & 0xFF; break;
+  case NONE: break;
+  }
+  if(operand > 0xFF)
+    return operand_out_of_range(operand);
+  dbr = operand;
+  return OK;
+}
+
 Status sta(Line* line) { return primary(line, STA_BASE, 0); }
 Status stp(Line* line) { return implicit(line, STP); }
 Status stx(Line* line) { return group2(line, STX_BASE); }

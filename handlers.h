@@ -89,6 +89,7 @@ Status sed(Line* line);
 Status sei(Line* line);
 Status sep(Line* line);
 Status setd(Line* line);
+Status setdbr(Line* line);
 Status sta(Line* line);
 Status stp(Line* line);
 Status stx(Line* line);
