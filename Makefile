@@ -1,3 +1,5 @@
+CFLAGS="-Wall"
+
 snap: \
 error.o \
 eval.o \
