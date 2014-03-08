@@ -290,6 +290,30 @@ static int immediate(int operand, Addressing_modifier mod, int sixteen) {
   }
 }
 
+static int is_direct_page(int* operand, Expr_class expr_class) {
+  switch(expr_class) {
+  case NUMERIC: return *operand <= 0xFF;
+  case SYMBOLIC:
+    if(*operand <= 0xFFFF && *operand >= d && *operand - d <= 0xFF) {
+      *operand = *operand - d;
+      return 1;
+    } else {
+      return 0;
+    }
+  }
+}
+
+static int is_near(int operand, Expr_class expr_class) {
+  switch(expr_class) {
+  case NUMERIC: return operand <= 0xFFFF;
+  case SYMBOLIC: return operand >> 16 == dbr;
+  }
+}
+
+static int is_far(int operand) {
+  return operand <= 0xFFFFFF;
+}
+
 static Status primary(Line* line, int base, int sixteen_bit) {
   int operand;
 
@@ -336,7 +360,7 @@ static Status primary(Line* line, int base, int sixteen_bit) {
     break;
   case ABSOLUTE:
   case ABSOLUTE_INDEXED_X:
-    if(operand <= 0xFF) {
+    if(is_direct_page(&operand, expr_class(line->expr1))) {
       line->byte_size = 2;
       switch(line->addr_mode) {
       case ABSOLUTE: line->bytes[0] = base + PRIMARY_DP; break;
@@ -344,7 +368,7 @@ static Status primary(Line* line, int base, int sixteen_bit) {
       default:;
       }
     }
-    else if(operand <= 0xFFFF) {
+    else if(is_near(operand, expr_class(line->expr1))) {
       line->byte_size = 3;
       switch(line->addr_mode) {
       case ABSOLUTE: line->bytes[0] = base + PRIMARY_ABS; break;
@@ -352,7 +376,7 @@ static Status primary(Line* line, int base, int sixteen_bit) {
       default:;
       }
     }
-    else if(operand <= 0xFFFFFF) {
+    else if(is_far(operand)) {
       line->byte_size = 4;
       switch(line->addr_mode) {
       case ABSOLUTE: line->bytes[0] = base + PRIMARY_ABS_LONG; break;
@@ -366,7 +390,7 @@ static Status primary(Line* line, int base, int sixteen_bit) {
     break;
   case ABSOLUTE_INDEXED_Y:
     line->byte_size = 3;
-    if(operand > 0xFFFF)
+    if(!is_near(operand, expr_class(line->expr1)))
       return operand_out_of_range(operand);
     line->bytes[0] = base + PRIMARY_ABS_INDEXED_Y;
     break;
@@ -444,11 +468,11 @@ Status group2(Line* line, int base) {
    }
    break;
   case ABSOLUTE:
-    if(operand <= 0xFF) {
+    if(is_direct_page(&operand, expr_class(line->expr1))) {
       line->byte_size = 2;
       line->bytes[0] = base | (G2_DP << 2);
     }
-    else if(operand <= 0xFFFF) {
+    else if(is_near(operand, expr_class(line->expr1))) {
       line->byte_size = 3;
       line->bytes[0] = base | (G2_ABS << 2);
     }
@@ -462,11 +486,11 @@ Status group2(Line* line, int base) {
     if(line->addr_mode == ABSOLUTE_INDEXED_X && base == STX_BASE)
       return invalid_operand(line);
 
-    if(operand <= 0xFF) {
+    if(is_direct_page(&operand, expr_class(line->expr1))) {
       line->byte_size = 2;
       line->bytes[0] = base | (G2_DP_INDEXED << 2);
     }
-    else if(operand <= 0xFFFF) {
+    else if(is_near(operand, expr_class(line->expr1))) {
       line->byte_size = 3;
       line->bytes[0] = base | (G2_ABS_INDEXED << 2);
     }
@@ -515,11 +539,11 @@ Status indexld(Line* line, int base) {
     line->bytes[0] = base + INDEX_LOAD_IMM;
     break;
   case ABSOLUTE:
-    if(operand <= 0xFF) {
+    if(is_direct_page(&operand, expr_class(line->expr1))) {
       line->byte_size = 2;
       line->bytes[0] = base + INDEX_LOAD_DP;
     }
-    else if(operand <= 0xFFFF) {
+    else if(is_near(operand, expr_class(line->expr1))) {
       line->byte_size = 3;
       line->bytes[0] = base + INDEX_LOAD_ABS;
     }
@@ -531,11 +555,11 @@ Status indexld(Line* line, int base) {
     if((line->addr_mode == ABSOLUTE_INDEXED_X && base == LDX_BASE) ||
        (line->addr_mode == ABSOLUTE_INDEXED_Y && base == LDY_BASE))
       return invalid_operand(line);
-    if(operand <= 0xFF) {
+    if(is_direct_page(&operand, expr_class(line->expr1))) {
       line->byte_size = 2;
       line->bytes[0] = base + INDEX_LOAD_DP_INDEXED;
     }
-    else if(operand <= 0xFFFF) {
+    else if(is_near(operand, expr_class(line->expr1))) {
       line->byte_size = 3;
       line->bytes[0] = base + INDEX_LOAD_ABS_INDEXED;
     }
@@ -579,11 +603,11 @@ Status indexcmp(Line* line, int base) {
     line->bytes[0] = base + INDEX_CMP_IMM;
     break;
   case ABSOLUTE:
-    if(operand <= 0xFF) {
+    if(is_direct_page(&operand, expr_class(line->expr1))) {
       line->byte_size = 2;
       line->bytes[0] = base + INDEX_CMP_DP;
     }
-    else if(operand <= 0xFFFF) {
+    else if(is_near(operand, expr_class(line->expr1))) {
       line->byte_size = 3;
       line->bytes[0] = base + INDEX_CMP_ABS;
     }
@@ -612,11 +636,11 @@ Status testbits(Line* line, int base) {
 
   if(line->addr_mode != ABSOLUTE)
     return invalid_operand(line);
-  if(operand <= 0xFF) {
+  if(is_direct_page(&operand, expr_class(line->expr1))) {
     line->bytes[0] = base + TEST_DP;
     line->byte_size = 2;
   }
-  else if(operand <= 0xFFFF) {
+  else if(is_near(operand, expr_class(line->expr1))) {
     line->bytes[0] = base + TEST_ABS;
     line->byte_size = 3;
   }
@@ -771,7 +795,7 @@ Status bit(Line* line) {
     break;
   case ABSOLUTE:
   case ABSOLUTE_INDEXED_X:
-    if(operand <= 0xFF) {
+    if(is_direct_page(&operand, expr_class(line->expr1))) {
       line->byte_size = 2;
       switch(line->addr_mode) {
       case ABSOLUTE: line->bytes[0] = BIT_DP; break;
@@ -779,7 +803,7 @@ Status bit(Line* line) {
       default:;
       }
     }
-    else if(operand <= 0xFFFF) {
+    else if(is_near(operand, expr_class(line->expr1))) {
       line->byte_size = 3;
       switch(line->addr_mode) {
       case ABSOLUTE: line->bytes[0] = BIT_ABS; break;
@@ -1038,7 +1062,7 @@ Status jml(Line* line) {
     break;
   case INDIRECT_LONG:
     line->byte_size = 3;
-    if(operand > 0xFFFF)
+    if(!is_near(operand, expr_class(line->expr1)))
       return operand_out_of_range(operand);
     line->bytes[0] = JML_INDIRECT;
     line->bytes[1] = LO(operand);
@@ -1098,7 +1122,7 @@ Status jsr(Line* line) {
     line->bytes[0] = JSR_ABS;
     break;
   case INDEXED_INDIRECT_X:
-    if(operand > 0xFFFF)
+    if(!is_near(operand, expr_class(line->expr1)))
       return operand_out_of_range(operand);
     line->bytes[0] = JSR_ABS_INDEXED_INDIRECT;
     break;
@@ -1229,7 +1253,7 @@ Status pei(Line* line) {
 
   if(line->addr_mode != INDIRECT)
     return invalid_operand(line);
-  if(operand > 0xFF)
+  if(!is_direct_page(&operand, expr_class(line->expr1)))
     return operand_out_of_range(operand);
 
   line->bytes[0] = PEI;
@@ -1305,7 +1329,7 @@ Status stz(Line* line) {
   switch(line->addr_mode) {
   case ABSOLUTE:
   case ABSOLUTE_INDEXED_X:
-    if(operand <= 0xFF) {
+    if(is_direct_page(&operand, expr_class(line->expr1))) {
       line->byte_size = 2;
       switch(line->addr_mode) {
       case ABSOLUTE: line->bytes[0] = STZ_DP; break;
@@ -1313,7 +1337,7 @@ Status stz(Line* line) {
       default:;
       }
     }
-    else if(operand <= 0xFFFF) {
+    else if(is_near(operand, expr_class(line->expr1))) {
       line->byte_size = 3;
       switch(line->addr_mode) {
       case ABSOLUTE: line->bytes[0] = STZ_ABS; break;
