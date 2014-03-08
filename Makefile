@@ -1,6 +1,7 @@
 snap: \
 error.o \
 eval.o \
+expr.o \
 handlers.o \
 instructions.o \
 labels.o \
@@ -21,6 +22,10 @@ eval.h \
 expr.h \
 labels.h \
 snap.h
+
+expr.o: \
+expr.c \
+expr.h
 
 handlers.o: \
 eval.h \

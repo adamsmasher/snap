@@ -2,6 +2,7 @@
 #define EXPR_H
 
 typedef enum {SYMBOL, NUMBER, ADD, SUB, STRING_EXPR} Expr_type;
+typedef enum {NUMERIC, SYMBOLIC} Expr_class;
 
 typedef struct Expr_t {
   Expr_type type;
@@ -13,5 +14,7 @@ typedef struct Expr_t {
   } e;
   struct Expr_t* next; /* for a list */
 } Expr;
+
+Expr_class expr_class(Expr* expr);
 
 #endif
