@@ -27,6 +27,8 @@ int line_num = 0;
 int missing_labels = 0;
 int pass = 0;
 int pc = 0;
+int d = 0;
+int dbr = 0;
 
 /* prototypes */
 Status assemble();
@@ -115,7 +117,7 @@ Status assemble() {
     /* continue doing passes as long as we're missing labels */
     do {
       lp = first_line;
-      acc16 = index16 = 0;
+      acc16 = index16 = d = dbr = 0;
       missing_labels = 0;
       current_label = "";
       current_label_len = 0;

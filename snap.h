@@ -12,6 +12,8 @@ extern int line_num;
 extern int missing_labels;
 extern int pass;
 extern int pc;
+extern int d;
+extern int dbr;
 
 Status load_file(char* filename);
 
