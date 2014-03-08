@@ -104,6 +104,7 @@ void init_instructions() {
     {"sed", sed},
     {"sei", sei},
     {"sep", sep},
+    {"setd", setd},
     {"sta", sta},
     {"stp", stp},
     {"stx", stx},

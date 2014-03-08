@@ -1309,6 +1309,31 @@ Status sec(Line* line) { return implicit(line, SEC); }
 Status sed(Line* line) { return implicit(line, SED); }
 Status sei(Line* line) { return implicit(line, SEI); }
 Status sep(Line* line) { return constant(line, SEP); }
+
+Status setd(Line* line) {
+  int operand;
+
+  if(line->addr_mode != IMMEDIATE)
+    return invalid_operand(line);
+
+  if(eval(line->expr1, &operand) != OK) {
+    if(pass)
+      return ERROR;
+    else
+      return OK;
+  }
+  switch(line->modifier) {
+  case IMMEDIATE_HI: operand = (operand & 0xFFFF00) >> 8; break;
+  case IMMEDIATE_MID: operand = operand & 0xFFFF; break;
+  case IMMEDIATE_LO: operand = operand & 0xFFFF; break;
+  case NONE: break;
+  }
+  if(operand > 0xFFFF)
+    return operand_out_of_range(operand);
+  d = operand;
+  return OK;
+}
+
 Status sta(Line* line) { return primary(line, STA_BASE, 0); }
 Status stp(Line* line) { return implicit(line, STP); }
 Status stx(Line* line) { return group2(line, STX_BASE); }
